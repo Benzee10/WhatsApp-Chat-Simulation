@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import LandingView from './components/LandingView';
 import ScanningView from './components/ScanningView';
 import ResultView from './components/ResultView';
+import RecentActivity from './components/RecentActivity';
 
 type AppStep = 'landing' | 'scanning' | 'result';
 
@@ -45,6 +46,9 @@ const App: React.FC = () => {
           )}
         </div>
       </main>
+
+      {/* Social Proof Toasts */}
+      <RecentActivity />
 
       {/* Sticky Telegram Button - Right Side and Raised */}
       <a 

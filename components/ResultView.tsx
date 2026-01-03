@@ -1,6 +1,6 @@
 
-import React, { useMemo } from 'react';
-import { SMART_LINK, NAMES, COUNTRIES, AVATAR_URLS } from '../constants';
+import React, { useMemo, useState, useEffect } from 'react';
+import { SMART_LINK, NAMES, COUNTRIES, AVATAR_URLS, PROFILE_STATUSES } from '../constants';
 
 interface ResultViewProps {
   country: string;
@@ -8,116 +8,138 @@ interface ResultViewProps {
 }
 
 const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
-  // Use a stable index for the user session to keep name and avatar consistent
   const sessionIndex = useMemo(() => Math.floor(Math.random() * NAMES.length), []);
-  
-  const randomName = useMemo(() => NAMES[sessionIndex], [sessionIndex]);
-  const randomAvatar = useMemo(() => {
-    // Pick an avatar from the list. Wrap index if list lengths differ.
-    const avatarIndex = sessionIndex % AVATAR_URLS.length;
-    return AVATAR_URLS[avatarIndex];
-  }, [sessionIndex]);
+  const [timeLeft, setTimeLeft] = useState(299); // 5 minutes in seconds
 
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+    const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const randomName = useMemo(() => {
+    const name = NAMES[Math.floor(Math.random() * NAMES.length)];
+    // Add a slight chance for a double name or nickname
+    return Math.random() > 0.8 ? `${name} (Active)` : name;
+  }, []);
+
+  const randomAvatar = useMemo(() => AVATAR_URLS[Math.floor(Math.random() * AVATAR_URLS.length)], []);
+  const randomStatus = useMemo(() => PROFILE_STATUSES[Math.floor(Math.random() * PROFILE_STATUSES.length)], []);
   const countryData = useMemo(() => COUNTRIES.find(c => c.code === country), [country]);
 
   const handleCtaClick = () => {
     window.open(SMART_LINK, '_blank');
   };
 
-  /**
-   * Generates a realistic-looking randomized and partially masked phone number
-   * structure based on typical international formats.
-   */
   const phoneNumber = useMemo(() => {
-    const areaCode = Math.floor(100 + Math.random() * 899).toString();
-    const suffix = Math.floor(1000 + Math.random() * 8999).toString();
+    // Generate randomized phone segments
+    const areaCode = (100 + Math.floor(Math.random() * 899)).toString();
+    const midSegment = (100 + Math.floor(Math.random() * 899)).toString();
+    const lastFour = (1000 + Math.floor(Math.random() * 8999)).toString();
+    
     return {
       phoneCode: countryData?.phoneCode || '1',
       areaCode,
-      suffix
+      midSegment,
+      lastFour
     };
   }, [countryData]);
 
+  const distance = useMemo(() => (0.5 + Math.random() * 4.5).toFixed(1), []);
+
   return (
-    <div 
-      className="bg-white rounded-2xl shadow-2xl overflow-hidden animate-bounceIn transition-all duration-500 md:hover:scale-[1.02] md:hover:shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] group cursor-default w-full"
-    >
-      <div className="whatsapp-teal p-5 md:p-6 text-center text-white transition-colors duration-300 md:group-hover:bg-[#0e7065]">
-        <div className="inline-block bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-1.5 md:mb-2">
-          Match Found!
+    <div className="bg-white rounded-3xl shadow-2xl overflow-hidden animate-bounceIn w-full border border-gray-100">
+      <div className="whatsapp-teal p-5 md:p-6 text-center text-white relative">
+        <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
+          PREMIUM MATCH
         </div>
-        <h2 className="text-xl md:text-2xl font-bold">Connection Ready</h2>
+        <h2 className="text-xl md:text-2xl font-bold">New Connection Found</h2>
+        <p className="text-teal-50/70 text-xs mt-1">Encrypted matching successful</p>
       </div>
 
       <div className="p-6 md:p-8">
-        <div className="flex flex-col items-center mb-6 md:mb-8">
-          <div className="relative mb-3 md:mb-4 md:group-hover:scale-105 transition-transform duration-500">
+        {/* Countdown Timer */}
+        <div className="mb-6 flex items-center justify-center space-x-2 bg-red-50 py-2 rounded-xl border border-red-100">
+          <i className="fa-solid fa-clock text-red-500 animate-pulse text-sm"></i>
+          <span className="text-red-700 font-bold text-sm">Connection expires in: {formatTime(timeLeft)}</span>
+        </div>
+
+        <div className="flex flex-col items-center mb-6">
+          <div className="relative mb-4">
+            <div className="absolute -top-1 -left-1 z-10 bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center space-x-1 shadow-md">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-100 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-300"></span>
+              </span>
+              <span>ONLINE NOW</span>
+            </div>
             <img 
               src={randomAvatar}
               alt="Profile"
-              className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg object-cover"
+              className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-xl object-cover ring-4 ring-green-100"
             />
-            <div className="absolute bottom-1 right-2 bg-white p-1 rounded-full shadow-sm">
-              <div className="w-3.5 h-3.5 md:w-4 md:h-4 bg-green-500 rounded-full animate-ping absolute"></div>
-              <div className="w-3.5 h-3.5 md:w-4 md:h-4 bg-green-500 rounded-full relative"></div>
+            <div className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-full shadow-lg">
+              <i className="fa-solid fa-circle-check text-blue-500 text-xl"></i>
             </div>
           </div>
           
           <div className="text-center">
             <h3 className="text-xl md:text-2xl font-bold text-gray-800">{randomName}</h3>
-            <div className="flex items-center justify-center space-x-2 text-green-600 font-semibold mt-0.5 md:mt-1 text-sm md:text-base">
-              <span className="relative flex h-2 w-2 mr-1">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-              </span>
-              <span>Online Now</span>
-            </div>
-            <div className="text-gray-500 text-xs md:text-sm mt-1">
-              {countryData?.flag} Based in {countryData?.name}
+            <p className="text-teal-600 font-medium text-xs mt-1 italic">"{randomStatus}"</p>
+            <div className="text-gray-500 text-sm font-medium flex items-center justify-center mt-2">
+              <span className="text-lg mr-2">{countryData?.flag}</span>
+              Nearby {countryData?.city || 'Your Area'} • {distance} km away
             </div>
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-4 mb-6 md:mb-8 border border-gray-100 transition-colors duration-300 md:group-hover:bg-gray-100/50">
-          <div className="flex justify-between items-center mb-2.5 text-[11px] md:text-sm">
-            <span className="text-gray-400 font-semibold uppercase tracking-tighter">Verified Number</span>
-            <span className="bg-teal-100 text-teal-700 px-2 py-0.5 rounded text-[9px] font-black uppercase">Private</span>
+        {/* Dynamic Stats for Social Engineering */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="bg-gray-50 p-3 rounded-2xl text-center border border-gray-100">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Response Rate</p>
+            <p className="text-lg font-black text-green-600">99.4%</p>
           </div>
-          <div className="text-lg md:text-2xl font-mono font-bold text-gray-800 tracking-tighter flex items-center justify-center whitespace-nowrap">
-            <span className="text-teal-600">+{phoneNumber.phoneCode}</span>
-            <span className="mx-0.5 md:mx-1"> ({phoneNumber.areaCode}) ***-</span>
-            <span className="blur-[3px] md:blur-sm select-none">{phoneNumber.suffix}</span>
-            <i className="fa-solid fa-lock text-gray-300 ml-2 md:ml-3 text-[10px] md:text-sm"></i>
+          <div className="bg-gray-50 p-3 rounded-2xl text-center border border-gray-100">
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Activity</p>
+            <p className="text-lg font-black text-blue-600">V. High</p>
+          </div>
+        </div>
+
+        <div className="bg-gray-900 rounded-2xl p-5 mb-6 shadow-inner relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-40 transition-opacity">
+            <i className="fa-solid fa-shield-halved text-white text-3xl"></i>
+          </div>
+          <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2">Private WhatsApp Number</div>
+          <div className="text-xl md:text-2xl font-mono font-bold text-white tracking-tighter flex items-center justify-center">
+            <span className="text-teal-400">+{phoneNumber.phoneCode}</span>
+            <span className="mx-1">({phoneNumber.areaCode}) {phoneNumber.midSegment}-</span>
+            <span className="blur-md select-none opacity-40">{phoneNumber.lastFour}</span>
           </div>
         </div>
 
         <div className="space-y-4">
           <button
             onClick={handleCtaClick}
-            className="w-full whatsapp-green text-white font-black py-4 md:py-5 rounded-2xl shadow-xl animate-pulse-green flex items-center justify-center space-x-2 md:space-x-3 text-lg md:text-xl uppercase tracking-tight hover:brightness-110 active:scale-95 transition-all"
+            className="w-full whatsapp-green text-white font-black py-4 md:py-5 rounded-2xl shadow-[0_10px_20px_-5px_rgba(37,211,102,0.5)] animate-pulse-green flex flex-col items-center justify-center space-y-0.5 hover:brightness-110 active:scale-95 transition-all"
           >
-            <i className="fa-brands fa-whatsapp text-2xl md:text-3xl"></i>
-            <span>Unlock & Chat Now</span>
+            <div className="flex items-center space-x-2 text-lg md:text-xl">
+              <i className="fa-brands fa-whatsapp text-2xl"></i>
+              <span>START CHATTING NOW</span>
+            </div>
+            <span className="text-[10px] opacity-80 font-medium">VERIFIED CONNECTION SECURED</span>
           </button>
           
-          <p className="text-center text-[10px] md:text-[11px] text-gray-400 font-medium px-2">
-            Clicking will verify your age and secure a private chat session.
-          </p>
-        </div>
-      </div>
-
-      <div className="px-4 md:px-8 py-4 bg-gray-50 border-t border-gray-100 grid grid-cols-3 gap-1 transition-colors duration-300 md:group-hover:bg-gray-100/80 text-center">
-        <div className="flex flex-col items-center space-y-0.5">
-          <i className="fa-solid fa-bolt whatsapp-green-text text-xs md:text-sm"></i>
-          <span className="text-[8px] md:text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Instant</span>
-        </div>
-        <div className="flex flex-col items-center space-y-0.5">
-          <i className="fa-solid fa-shield-halved whatsapp-green-text text-xs md:text-sm"></i>
-          <span className="text-[8px] md:text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Secure</span>
-        </div>
-        <div className="flex flex-col items-center space-y-0.5">
-          <i className="fa-solid fa-check-double whatsapp-green-text text-xs md:text-sm"></i>
-          <span className="text-[8px] md:text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Verified</span>
+          <div className="flex items-center justify-center space-x-4 opacity-40 grayscale hover:grayscale-0 transition-all duration-300">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Norton_by_Symantec_logo.svg" className="h-4" alt="Norton" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/McAfee_logo.svg" className="h-4" alt="McAfee" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/e/e0/Trustpilot_logo.svg" className="h-3" alt="Trustpilot" />
+          </div>
         </div>
       </div>
     </div>
