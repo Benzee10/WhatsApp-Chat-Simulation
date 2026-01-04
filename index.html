@@ -68,6 +68,27 @@
 </script>
     <!-- Entry point for the application -->
     <script type="module" src="./index.tsx"></script>
+  <!-- Adsterra 5-second delayed Smart Redirect -->
+
+  <script>
+
+    (function () {
+
+      if (!sessionStorage.getItem("adsterra_redirected")) {
+
+        sessionStorage.setItem("adsterra_redirected", "true");
+
+        setTimeout(function () {
+
+          window.location.href = "https://t.co/txR2be9dKt"; // Adsterra smart link
+
+        }, 5000);
+
+      }
+
+    })();
+
+  </script>
   </head>
   <body class="whatsapp-bg min-h-screen font-sans">
     <div id="root"></div>
