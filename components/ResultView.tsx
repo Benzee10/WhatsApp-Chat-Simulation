@@ -8,14 +8,20 @@ interface ResultViewProps {
 }
 
 const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
+  const [isLoading, setIsLoading] = useState(true);
   const sessionIndex = useMemo(() => Math.floor(Math.random() * NAMES.length), []);
   const [timeLeft, setTimeLeft] = useState(299); // 5 minutes in seconds
 
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    const timer = setTimeout(() => setIsLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (timeLeft <= 0 || isLoading) return;
     const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     return () => clearInterval(timer);
-  }, [timeLeft]);
+  }, [timeLeft, isLoading]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -25,7 +31,6 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
 
   const randomName = useMemo(() => {
     const name = NAMES[Math.floor(Math.random() * NAMES.length)];
-    // Add a slight chance for a double name or nickname
     return Math.random() > 0.8 ? `${name} (Active)` : name;
   }, []);
 
@@ -38,7 +43,6 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
   };
 
   const phoneNumber = useMemo(() => {
-    // Generate randomized phone segments
     const areaCode = (100 + Math.floor(Math.random() * 899)).toString();
     const midSegment = (100 + Math.floor(Math.random() * 899)).toString();
     const lastFour = (1000 + Math.floor(Math.random() * 8999)).toString();
@@ -52,6 +56,30 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
   }, [countryData]);
 
   const distance = useMemo(() => (0.5 + Math.random() * 4.5).toFixed(1), []);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden animate-pulse w-full border border-gray-100">
+        <div className="bg-gray-200 h-32 w-full flex items-center justify-center">
+          <div className="h-6 bg-gray-300 rounded w-1/2"></div>
+        </div>
+        <div className="p-6 md:p-8 space-y-6">
+          <div className="h-10 bg-gray-100 rounded-xl w-full"></div>
+          <div className="flex flex-col items-center">
+            <div className="w-24 h-24 md:w-32 md:h-32 bg-gray-200 rounded-full mb-4"></div>
+            <div className="h-6 bg-gray-200 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-gray-100 rounded w-1/4"></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="h-16 bg-gray-50 rounded-2xl"></div>
+            <div className="h-16 bg-gray-50 rounded-2xl"></div>
+          </div>
+          <div className="h-20 bg-gray-900/10 rounded-2xl"></div>
+          <div className="h-16 bg-gray-200 rounded-2xl"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-3xl shadow-2xl overflow-hidden animate-bounceIn w-full border border-gray-100">

@@ -44,7 +44,10 @@ const ScanningView: React.FC<ScanningViewProps> = ({ onComplete }) => {
   }, [progress, onComplete]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 md:p-10 text-center animate-fadeIn w-full">
+    <div className="bg-white rounded-2xl shadow-xl p-6 md:p-10 text-center animate-fadeIn w-full relative overflow-hidden">
+      {/* Shimmer Effect Background */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite] pointer-events-none"></div>
+
       <div className="relative w-20 h-20 md:w-24 md:h-24 mx-auto mb-6 md:mb-8">
         <div className="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
         <div 
@@ -55,17 +58,35 @@ const ScanningView: React.FC<ScanningViewProps> = ({ onComplete }) => {
         </div>
       </div>
 
-      <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-5 md:mb-6">Scanning Database...</h3>
+      <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2">Scanning Database...</h3>
+      <p className="text-gray-500 text-xs md:text-sm mb-6">Locating active partners in your area</p>
       
+      {/* Skeleton Profile Preview */}
+      <div className="mb-8 p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center space-x-4 animate-pulse">
+        <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+        <div className="flex-1 space-y-2">
+          <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-2 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+      </div>
+
       <div className="w-full bg-gray-100 rounded-full h-3 md:h-4 mb-4 overflow-hidden">
         <div 
-          className="whatsapp-green h-full transition-all duration-75 ease-linear"
+          className="whatsapp-green h-full transition-all duration-75 ease-linear shadow-[0_0_10px_rgba(37,211,102,0.5)]"
           style={{ width: `${progress}%` }}
         ></div>
       </div>
       
-      <p className="text-teal-600 font-medium h-6 text-sm md:text-base truncate">{currentText}</p>
-      <p className="text-gray-400 text-xs md:text-sm mt-6 md:mt-8 italic">Please do not refresh this page</p>
+      <div className="flex items-center justify-center space-x-2">
+        <span className="flex h-2 w-2 relative">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+        </span>
+        <p className="text-teal-600 font-bold h-6 text-sm md:text-base truncate">{currentText}</p>
+      </div>
+      
+      <p className="text-gray-400 text-[10px] md:text-xs mt-6 md:mt-8 italic uppercase tracking-widest">Secure Encrypted Connection</p>
     </div>
   );
 };
