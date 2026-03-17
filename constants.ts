@@ -2,7 +2,7 @@
 /**
  * Change this link to your actual affiliate or offer URL
  */
-export const SMART_LINK = "https://redirecting-kappa.vercel.app";
+export const SMART_LINK = "https://shorteroverflowmartyr.com/pfvvfhsid?key=ce13e817b2b71b3f25bfb988c80c2f46";
 
 export const COUNTRIES = [
   // Global High Traffic
