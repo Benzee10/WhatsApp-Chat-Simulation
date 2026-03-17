@@ -9,6 +9,7 @@ interface ResultViewProps {
 
 const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [showNotification, setShowNotification] = useState(false);
   const sessionIndex = useMemo(() => Math.floor(Math.random() * NAMES.length), []);
   const [timeLeft, setTimeLeft] = useState(299); // 5 minutes in seconds
 
@@ -16,6 +17,17 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
     const timer = setTimeout(() => setIsLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      const notificationTimer = setTimeout(() => {
+        setShowNotification(true);
+        // Hide after 5 seconds
+        setTimeout(() => setShowNotification(false), 5000);
+      }, 4000);
+      return () => clearTimeout(notificationTimer);
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     if (timeLeft <= 0 || isLoading) return;
@@ -82,7 +94,25 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
   }
 
   return (
-    <div className="bg-white rounded-3xl shadow-2xl overflow-hidden animate-bounceIn w-full border border-gray-100">
+    <div className="bg-white rounded-3xl shadow-2xl overflow-hidden animate-bounceIn w-full border border-gray-100 relative">
+      {/* Fake Notification Toast */}
+      <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 flex items-center space-x-4 transition-all duration-500 ${showNotification ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0 pointer-events-none'}`}>
+        <div className="relative">
+          <img src={randomAvatar} className="w-12 h-12 rounded-full object-cover" alt="Avatar" />
+          <div className="absolute -bottom-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-white"></div>
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-gray-900">{randomName}</span>
+            <span className="text-[10px] text-gray-400">Just now</span>
+          </div>
+          <p className="text-sm text-gray-600 line-clamp-1">Hey! I'm waiting for you in chat... 😉</p>
+        </div>
+        <div className="bg-teal-50 p-2 rounded-full">
+          <i className="fa-brands fa-whatsapp text-teal-600"></i>
+        </div>
+      </div>
+
       <div className="whatsapp-teal p-5 md:p-6 text-center text-white relative">
         <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
           PREMIUM MATCH

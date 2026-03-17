@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LandingView from './components/LandingView';
+import QuizView from './components/QuizView';
 import ScanningView from './components/ScanningView';
 import ResultView from './components/ResultView';
 import RecentActivity from './components/RecentActivity';
 
-type AppStep = 'landing' | 'scanning' | 'result';
+type AppStep = 'landing' | 'quiz' | 'scanning' | 'result';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>('landing');
@@ -17,6 +18,10 @@ const App: React.FC = () => {
   const handleStartSearch = (country: string, preference: string) => {
     setSelectedCountry(country);
     setSelectedPreference(preference);
+    setStep('quiz');
+  };
+
+  const handleQuizComplete = () => {
     setStep('scanning');
   };
 
@@ -32,6 +37,10 @@ const App: React.FC = () => {
         <div className="w-full max-w-md mx-auto">
           {step === 'landing' && (
             <LandingView onStart={handleStartSearch} />
+          )}
+
+          {step === 'quiz' && (
+            <QuizView onComplete={handleQuizComplete} />
           )}
           
           {step === 'scanning' && (

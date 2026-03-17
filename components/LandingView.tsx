@@ -9,6 +9,7 @@ interface LandingViewProps {
 const LandingView: React.FC<LandingViewProps> = ({ onStart }) => {
   const [selectedCountryCode, setSelectedCountryCode] = useState(COUNTRIES[0]?.code || 'US');
   const [selectedPreferenceId, setSelectedPreferenceId] = useState(PREFERENCES[0]?.id || 'text');
+  const [isAutoDetecting, setIsAutoDetecting] = useState(true);
   
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const [isPreferenceOpen, setIsPreferenceOpen] = useState(false);
@@ -18,6 +19,26 @@ const LandingView: React.FC<LandingViewProps> = ({ onStart }) => {
 
   const selectedCountry = COUNTRIES.find(c => c.code === selectedCountryCode) || COUNTRIES[0];
   const selectedPreference = PREFERENCES.find(p => p.id === selectedPreferenceId) || PREFERENCES[0];
+
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        if (data.country_code) {
+          const matchedCountry = COUNTRIES.find(c => c.code === data.country_code);
+          if (matchedCountry) {
+            setSelectedCountryCode(matchedCountry.code);
+          }
+        }
+      } catch (error) {
+        console.error('Geo-IP detection failed:', error);
+      } finally {
+        setIsAutoDetecting(false);
+      }
+    };
+    detectCountry();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -149,6 +170,42 @@ const LandingView: React.FC<LandingViewProps> = ({ onStart }) => {
         <div className="flex flex-col md:flex-row items-center justify-center md:space-x-1.5 space-y-1 md:space-y-0">
           <i className="fa-solid fa-user-check text-teal-500 text-xs md:text-sm"></i>
           <span>Verified</span>
+        </div>
+      </div>
+
+      {/* Testimonials Section */}
+      <div className="p-6 md:p-8 bg-white border-t border-gray-100">
+        <h4 className="text-sm font-bold text-gray-800 mb-4 uppercase tracking-widest text-center">Recent Success Stories</h4>
+        <div className="space-y-4">
+          <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="flex text-yellow-400 text-[10px]">
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+              </div>
+              <span className="text-[10px] font-bold text-gray-400">Verified User</span>
+            </div>
+            <p className="text-xs text-gray-600 italic">"Found a great chat partner in less than 2 minutes. The verification process really makes a difference!"</p>
+            <p className="text-[10px] font-bold text-teal-600 mt-2">— Mark R., London</p>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="flex text-yellow-400 text-[10px]">
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+                <i className="fa-solid fa-star"></i>
+              </div>
+              <span className="text-[10px] font-bold text-gray-400">Verified User</span>
+            </div>
+            <p className="text-xs text-gray-600 italic">"Best way to meet new people safely. The video call quality was amazing. Highly recommend!"</p>
+            <p className="text-[10px] font-bold text-teal-600 mt-2">— Sarah L., New York</p>
+          </div>
         </div>
       </div>
     </div>
