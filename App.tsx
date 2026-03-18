@@ -7,6 +7,7 @@ import QuizView from './components/QuizView';
 import ScanningView from './components/ScanningView';
 import ResultView from './components/ResultView';
 import RecentActivity from './components/RecentActivity';
+import GroupNotification from './components/GroupNotification';
 
 type AppStep = 'landing' | 'quiz' | 'scanning' | 'result';
 
@@ -58,6 +59,9 @@ const App: React.FC = () => {
 
       {/* Social Proof Toasts */}
       <RecentActivity />
+      
+      {/* New Group Notification */}
+      <GroupNotification />
 
       {/* Sticky Telegram Button - Right Side and Raised */}
       <a 
