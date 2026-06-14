@@ -63,12 +63,12 @@ const App: React.FC = () => {
       {/* New Group Notification */}
       <GroupNotification />
 
-      {/* Sticky Telegram Button - Right Side and Raised */}
+      {/* Sticky Telegram Button - Right Side and Raised above the group notification */}
       <a 
         href="https://t.me/xxx_pulse" 
         target="_blank" 
         rel="noopener noreferrer"
-        className="fixed bottom-20 right-4 md:bottom-24 md:right-6 z-50 bg-[#0088cc] text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center text-xl md:text-2xl transition-all duration-300 hover:scale-110 active:scale-95 group overflow-hidden"
+        className="fixed bottom-32 right-4 md:bottom-36 md:right-6 z-50 bg-[#0088cc] text-white w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center text-xl md:text-2xl transition-all duration-300 hover:scale-110 active:scale-95 group overflow-hidden"
         title="Join our Telegram"
       >
         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
