@@ -1,5 +1,6 @@
 {
   "name": "QuickChat Finder",
   "description": "A high-conversion landing page simulating a WhatsApp number search tool to drive traffic to affiliate links with a trustworthy, modern UI.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

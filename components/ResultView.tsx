@@ -1,17 +1,33 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { SMART_LINK, NAMES, COUNTRIES, AVATAR_URLS, PROFILE_STATUSES } from '../constants';
+import TeaserChatPreview from './TeaserChatPreview';
+import WhatsAppShareGate from './WhatsAppShareGate';
+import { SupportedLanguage, TRANSLATIONS } from '../translations';
 
 interface ResultViewProps {
   country: string;
   preference: string;
+  detectedCity?: string;
+  lang?: SupportedLanguage;
 }
 
-const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
+const ResultView: React.FC<ResultViewProps> = ({ country, preference, detectedCity, lang = 'en' }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showNotification, setShowNotification] = useState(false);
+  const [sharesCount, setSharesCount] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('quickchat_shares_count');
+      return saved ? parseInt(saved, 10) || 0 : 0;
+    }
+    return 0;
+  });
+  const [isGateHighlighted, setIsGateHighlighted] = useState(false);
+  const [showShareAlert, setShowShareAlert] = useState(false);
   const sessionIndex = useMemo(() => Math.floor(Math.random() * NAMES.length), []);
   const [timeLeft, setTimeLeft] = useState(299); // 5 minutes in seconds
+
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 2000);
@@ -49,8 +65,33 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
   const randomAvatar = useMemo(() => AVATAR_URLS[Math.floor(Math.random() * AVATAR_URLS.length)], []);
   const randomStatus = useMemo(() => PROFILE_STATUSES[Math.floor(Math.random() * PROFILE_STATUSES.length)], []);
   const countryData = useMemo(() => COUNTRIES.find(c => c.code === country), [country]);
+  const displayCity = useMemo(() => {
+    return detectedCity?.trim() || countryData?.city || 'Your Area';
+  }, [detectedCity, countryData]);
+
+  const handleShare = () => {
+    setSharesCount(prev => {
+      const next = Math.min(3, prev + 1);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('quickchat_shares_count', next.toString());
+      }
+      return next;
+    });
+  };
 
   const handleCtaClick = () => {
+    if (sharesCount < 3) {
+      setIsGateHighlighted(true);
+      setShowShareAlert(true);
+      const gate = document.getElementById('whatsapp-share-gate');
+      if (gate) {
+        gate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      setTimeout(() => setIsGateHighlighted(false), 3000);
+      setTimeout(() => setShowShareAlert(false), 5000);
+      return;
+    }
+
     window.open(SMART_LINK, '_blank');
   };
 
@@ -86,6 +127,7 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
             <div className="h-16 bg-gray-50 rounded-2xl"></div>
             <div className="h-16 bg-gray-50 rounded-2xl"></div>
           </div>
+          <div className="h-44 bg-gray-100 rounded-2xl"></div>
           <div className="h-20 bg-gray-900/10 rounded-2xl"></div>
           <div className="h-16 bg-gray-200 rounded-2xl"></div>
         </div>
@@ -104,9 +146,9 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-gray-900">{randomName}</span>
-            <span className="text-[10px] text-gray-400">Just now</span>
+            <span className="text-[10px] text-gray-400">{t.result?.justNow || 'Just now'}</span>
           </div>
-          <p className="text-sm text-gray-600 line-clamp-1">Hey! I'm waiting for you in chat... 😉</p>
+          <p className="text-sm text-gray-600 line-clamp-1">{t.result?.toastIncoming || "Hey! I'm waiting for you in chat... 😉"}</p>
         </div>
         <div className="bg-teal-50 p-2 rounded-full">
           <i className="fa-brands fa-whatsapp text-teal-600"></i>
@@ -115,17 +157,17 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
 
       <div className="whatsapp-teal p-5 md:p-6 text-center text-white relative">
         <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
-          PREMIUM MATCH
+          {t.result?.premiumMatch || 'PREMIUM MATCH'}
         </div>
-        <h2 className="text-xl md:text-2xl font-bold">New Connection Found</h2>
-        <p className="text-teal-50/70 text-xs mt-1">Encrypted matching successful</p>
+        <h2 className="text-xl md:text-2xl font-bold">{t.result?.connectionFound || 'New Connection Found'}</h2>
+        <p className="text-teal-50/70 text-xs mt-1">{t.result?.encryptedSuccess || 'Encrypted matching successful'}</p>
       </div>
 
       <div className="p-6 md:p-8">
         {/* Countdown Timer */}
         <div className="mb-6 flex items-center justify-center space-x-2 bg-red-50 py-2 rounded-xl border border-red-100">
           <i className="fa-solid fa-clock text-red-500 animate-pulse text-sm"></i>
-          <span className="text-red-700 font-bold text-sm">Connection expires in: {formatTime(timeLeft)}</span>
+          <span className="text-red-700 font-bold text-sm">{t.result?.expiresIn || 'Connection expires in:'} {formatTime(timeLeft)}</span>
         </div>
 
         <div className="flex flex-col items-center mb-6">
@@ -135,7 +177,7 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-100 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-300"></span>
               </span>
-              <span>ONLINE NOW</span>
+              <span>{t.result?.onlineNow || 'ONLINE NOW'}</span>
             </div>
             <img 
               src={randomAvatar}
@@ -152,7 +194,7 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
             <p className="text-teal-600 font-medium text-xs mt-1 italic">"{randomStatus}"</p>
             <div className="text-gray-500 text-sm font-medium flex items-center justify-center mt-2">
               <span className="text-lg mr-2">{countryData?.flag}</span>
-              Nearby {countryData?.city || 'Your Area'} • {distance} km away
+              {(t.result?.nearby || 'Nearby {city} • {distance} km away').replace('{city}', displayCity).replace('{distance}', distance)}
             </div>
           </div>
         </div>
@@ -160,37 +202,126 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference }) => {
         {/* Dynamic Stats for Social Engineering */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="bg-gray-50 p-3 rounded-2xl text-center border border-gray-100">
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Response Rate</p>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">{t.result?.responseRate || 'Response Rate'}</p>
             <p className="text-lg font-black text-green-600">99.4%</p>
           </div>
           <div className="bg-gray-50 p-3 rounded-2xl text-center border border-gray-100">
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Activity</p>
-            <p className="text-lg font-black text-blue-600">V. High</p>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">{t.result?.activity || 'Activity'}</p>
+            <p className="text-lg font-black text-blue-600">{t.result?.vHigh || 'V. High'}</p>
           </div>
         </div>
 
-        <div className="bg-gray-900 rounded-2xl p-5 mb-6 shadow-inner relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-40 transition-opacity">
-            <i className="fa-solid fa-shield-halved text-white text-3xl"></i>
+        {/* Verification Alert Banner */}
+        {showShareAlert && (
+          <div className="mb-4 p-3.5 bg-amber-500 text-white text-xs font-bold rounded-2xl shadow-lg flex items-center justify-between animate-bounce">
+            <div className="flex items-center space-x-2">
+              <i className="fa-solid fa-triangle-exclamation text-base"></i>
+              <span>
+                {t.shareGate?.toastAlert.replace('{remaining}', (3 - sharesCount).toString()) ||
+                  `Share this app link to ${3 - sharesCount} more WhatsApp group(s) to unlock chat!`}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowShareAlert(false)}
+              className="text-white/80 hover:text-white ml-2 p-1"
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
           </div>
-          <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2">Private WhatsApp Number</div>
+        )}
+
+        {/* Interactive Teaser WhatsApp Chat Preview */}
+        <TeaserChatPreview
+          name={randomName}
+          avatar={randomAvatar}
+          city={displayCity}
+          preference={preference}
+          onUnlock={handleCtaClick}
+          lang={lang}
+          isUnlocked={sharesCount >= 3}
+        />
+
+        {/* WhatsApp Group Share Locker Gate (Required: Share to 3 groups before unlocking) */}
+        <WhatsAppShareGate
+          sharesCount={sharesCount}
+          onShare={handleShare}
+          lang={lang}
+          targetName={randomName}
+          isHighlighted={isGateHighlighted}
+        />
+
+        {/* WhatsApp Number Reveal Box */}
+        <div
+          className={`rounded-2xl p-5 mb-6 shadow-inner relative overflow-hidden group transition-all duration-500 ${
+            sharesCount >= 3
+              ? 'bg-gradient-to-r from-teal-950 via-gray-900 to-teal-950 border-2 border-teal-400/80 shadow-lg'
+              : 'bg-gray-900 border border-gray-800'
+          }`}
+        >
+          <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-40 transition-opacity">
+            <i
+              className={`fa-solid ${
+                sharesCount >= 3 ? 'fa-circle-check text-green-400' : 'fa-shield-halved text-white'
+              } text-3xl`}
+            ></i>
+          </div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+              {t.result?.privateNumber || 'Private WhatsApp Number'}
+            </span>
+            {sharesCount >= 3 ? (
+              <span className="text-[10px] bg-green-500/20 text-green-400 border border-green-500/40 px-2 py-0.5 rounded-full font-bold flex items-center space-x-1">
+                <i className="fa-solid fa-check text-[9px]"></i>
+                <span>UNLOCKED</span>
+              </span>
+            ) : (
+              <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold flex items-center space-x-1">
+                <i className="fa-solid fa-lock text-[9px]"></i>
+                <span>LOCKED ({sharesCount}/3 SHARES)</span>
+              </span>
+            )}
+          </div>
           <div className="text-xl md:text-2xl font-mono font-bold text-white tracking-tighter flex items-center justify-center">
             <span className="text-teal-400">+{phoneNumber.phoneCode}</span>
             <span className="mx-1">({phoneNumber.areaCode}) {phoneNumber.midSegment}-</span>
-            <span className="blur-md select-none opacity-40">{phoneNumber.lastFour}</span>
+            {sharesCount >= 3 ? (
+              <span className="text-green-400 font-bold tracking-normal animate-fadeIn">
+                {phoneNumber.lastFour}
+              </span>
+            ) : (
+              <span className="blur-md select-none opacity-40">9834</span>
+            )}
           </div>
+          {sharesCount < 3 && (
+            <p className="text-[10px] text-center text-amber-300/80 mt-1.5 font-medium">
+              Share to 3 WhatsApp groups above to unblur and reveal direct number
+            </p>
+          )}
         </div>
 
         <div className="space-y-4">
           <button
             onClick={handleCtaClick}
-            className="w-full whatsapp-green text-white font-black py-4 md:py-5 rounded-2xl shadow-[0_10px_20px_-5px_rgba(37,211,102,0.5)] animate-pulse-green flex flex-col items-center justify-center space-y-0.5 hover:brightness-110 active:scale-95 transition-all"
+            className={`w-full text-white font-black py-4 md:py-5 rounded-2xl shadow-[0_10px_20px_-5px_rgba(37,211,102,0.5)] flex flex-col items-center justify-center space-y-0.5 hover:brightness-110 active:scale-95 transition-all ${
+              sharesCount >= 3
+                ? 'whatsapp-green animate-pulse-green'
+                : 'bg-gradient-to-r from-teal-700 via-emerald-600 to-teal-700'
+            }`}
           >
             <div className="flex items-center space-x-2 text-lg md:text-xl">
               <i className="fa-brands fa-whatsapp text-2xl"></i>
-              <span>START CHATTING NOW</span>
+              <span>
+                {sharesCount >= 3
+                  ? (t.result?.startChatting || 'START CHATTING NOW')
+                  : `SHARE TO 3 GROUPS TO CHAT (${sharesCount}/3)`}
+              </span>
             </div>
-            <span className="text-[10px] opacity-80 font-medium">VERIFIED CONNECTION SECURED</span>
+            <span className="text-[10px] opacity-90 font-medium">
+              {sharesCount >= 3
+                ? (t.result?.verifiedSecured || 'VERIFIED CONNECTION SECURED')
+                : `🔒 ${Math.max(0, 3 - sharesCount)} MORE GROUP(S) REQUIRED TO UNLOCK`}
+            </span>
           </button>
           
           <div className="flex items-center justify-center space-x-4 opacity-40 grayscale hover:grayscale-0 transition-all duration-300">

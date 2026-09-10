@@ -1,14 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { SCAN_STEPS } from '../constants';
+import { SupportedLanguage, TRANSLATIONS } from '../translations';
 
 interface ScanningViewProps {
   onComplete: () => void;
+  city?: string;
+  lang?: SupportedLanguage;
 }
 
-const ScanningView: React.FC<ScanningViewProps> = ({ onComplete }) => {
+const ScanningView: React.FC<ScanningViewProps> = ({ onComplete, city, lang = 'en' }) => {
   const [progress, setProgress] = useState(0);
-  const [currentText, setCurrentText] = useState(SCAN_STEPS[0]);
+
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const scanSteps = t.scanning.steps;
+  const [currentText, setCurrentText] = useState(scanSteps[0]);
 
   useEffect(() => {
     const duration = 4000; // 4 seconds total
@@ -32,16 +37,18 @@ const ScanningView: React.FC<ScanningViewProps> = ({ onComplete }) => {
 
   useEffect(() => {
     // Update text based on progress
-    const textIndex = Math.floor((progress / 100) * SCAN_STEPS.length);
-    if (textIndex < SCAN_STEPS.length) {
-      setCurrentText(SCAN_STEPS[textIndex]);
+    const textIndex = Math.floor((progress / 100) * scanSteps.length);
+    if (textIndex < scanSteps.length) {
+      setCurrentText(scanSteps[textIndex]);
     }
 
     if (progress >= 100) {
       const timeout = setTimeout(onComplete, 500);
       return () => clearTimeout(timeout);
     }
-  }, [progress, onComplete]);
+  }, [progress, onComplete, scanSteps]);
+
+  const displaySubtitle = t.scanning.subtitle.replace('{city}', city ? city : 'your area');
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-6 md:p-10 text-center animate-fadeIn w-full relative overflow-hidden">
@@ -58,8 +65,10 @@ const ScanningView: React.FC<ScanningViewProps> = ({ onComplete }) => {
         </div>
       </div>
 
-      <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2">Scanning Database...</h3>
-      <p className="text-gray-500 text-xs md:text-sm mb-6">Locating active partners in your area</p>
+      <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2">{t.scanning.title}</h3>
+      <p className="text-gray-500 text-xs md:text-sm mb-6">
+        {displaySubtitle}
+      </p>
       
       {/* Skeleton Profile Preview */}
       <div className="mb-8 p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center space-x-4 animate-pulse">
@@ -86,7 +95,7 @@ const ScanningView: React.FC<ScanningViewProps> = ({ onComplete }) => {
         <p className="text-teal-600 font-bold h-6 text-sm md:text-base truncate">{currentText}</p>
       </div>
       
-      <p className="text-gray-400 text-[10px] md:text-xs mt-6 md:mt-8 italic uppercase tracking-widest">Secure Encrypted Connection</p>
+      <p className="text-gray-400 text-[10px] md:text-xs mt-6 md:mt-8 italic uppercase tracking-widest">{t.scanning.privacyProtected}</p>
     </div>
   );
 };

@@ -8,6 +8,8 @@ import ScanningView from './components/ScanningView';
 import ResultView from './components/ResultView';
 import RecentActivity from './components/RecentActivity';
 import GroupNotification from './components/GroupNotification';
+import { COUNTRIES } from './constants';
+import { SupportedLanguage, detectLanguage } from './translations';
 
 type AppStep = 'landing' | 'quiz' | 'scanning' | 'result';
 
@@ -15,10 +17,14 @@ const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>('landing');
   const [selectedCountry, setSelectedCountry] = useState('US');
   const [selectedPreference, setSelectedPreference] = useState('text');
+  const [detectedCity, setDetectedCity] = useState<string | undefined>(undefined);
+  const [lang, setLang] = useState<SupportedLanguage>(() => detectLanguage());
+  const [userSelectedLangManually, setUserSelectedLangManually] = useState(false);
 
-  const handleStartSearch = (country: string, preference: string) => {
+  const handleStartSearch = (country: string, preference: string, city?: string) => {
     setSelectedCountry(country);
     setSelectedPreference(preference);
+    setDetectedCity(city);
     setStep('quiz');
   };
 
@@ -30,28 +36,53 @@ const App: React.FC = () => {
     setStep('result');
   };
 
+  const handleLanguageChange = (newLang: SupportedLanguage) => {
+    setLang(newLang);
+    setUserSelectedLangManually(true);
+  };
+
+  const countryData = COUNTRIES.find(c => c.code === selectedCountry);
+  const activeCity = detectedCity || countryData?.city || 'London';
+
   return (
     <div className="flex flex-col min-h-screen relative overflow-x-hidden">
-      <Header />
+      <Header 
+        city={activeCity} 
+        lang={lang} 
+        onSelectLang={handleLanguageChange} 
+      />
       
       <main className="flex-grow flex items-center justify-center p-4 md:p-6">
         <div className="w-full max-w-md mx-auto">
           {step === 'landing' && (
-            <LandingView onStart={handleStartSearch} />
+            <LandingView 
+              onStart={handleStartSearch} 
+              onLocationDetected={(city, country) => {
+                setDetectedCity(city);
+                setSelectedCountry(country);
+                if (!userSelectedLangManually) {
+                  const detected = detectLanguage(country);
+                  setLang(detected);
+                }
+              }}
+              lang={lang}
+            />
           )}
 
           {step === 'quiz' && (
-            <QuizView onComplete={handleQuizComplete} />
+            <QuizView onComplete={handleQuizComplete} lang={lang} />
           )}
           
           {step === 'scanning' && (
-            <ScanningView onComplete={handleScanComplete} />
+            <ScanningView onComplete={handleScanComplete} city={detectedCity} lang={lang} />
           )}
           
           {step === 'result' && (
             <ResultView 
               country={selectedCountry} 
-              preference={selectedPreference} 
+              preference={selectedPreference}
+              detectedCity={detectedCity}
+              lang={lang}
             />
           )}
         </div>
