@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { SMART_LINK, NAMES, COUNTRIES, AVATAR_URLS, generateNigerianPhoneNumber } from '../constants';
+import { SMART_LINK, NAMES, COUNTRIES, AVATAR_URLS, generateNigerianPhoneNumber, generateSouthAfricanPhoneNumber } from '../constants';
 import TeaserChatPreview from './TeaserChatPreview';
 import { SupportedLanguage, TRANSLATIONS } from '../translations';
 
@@ -104,6 +104,7 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference, detectedCi
   // Generates randomized phone number for WhatsApp direct link without displaying it on screen
   const phoneNumber = useMemo(() => {
     const isNigeria = country === 'NG' || countryData?.code === 'NG' || countryData?.phoneCode === '234';
+    const isSouthAfrica = country === 'ZA' || countryData?.code === 'ZA' || countryData?.phoneCode === '27';
 
     if (isNigeria) {
       // Local format: e.g. "08031234567"
@@ -112,6 +113,18 @@ const ResultView: React.FC<ResultViewProps> = ({ country, preference, detectedCi
       const intlNumber = `234${localNumber.startsWith('0') ? localNumber.slice(1) : localNumber}`;
       return {
         phoneCode: '234',
+        localNumber,
+        fullDigits: intlNumber
+      };
+    }
+
+    if (isSouthAfrica) {
+      // Local format: e.g. "0712345678"
+      const localNumber = generateSouthAfricanPhoneNumber();
+      // WhatsApp API requires international format: "27" + local without leading 0
+      const intlNumber = `27${localNumber.startsWith('0') ? localNumber.slice(1) : localNumber}`;
+      return {
+        phoneCode: '27',
         localNumber,
         fullDigits: intlNumber
       };

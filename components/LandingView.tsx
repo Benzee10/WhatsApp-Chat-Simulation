@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { COUNTRIES, PREFERENCES } from '../constants';
+import { COUNTRIES, PREFERENCES, ADMIN_WHATSAPP_LINK } from '../constants';
 import { SupportedLanguage, TRANSLATIONS } from '../translations';
 
 interface LandingViewProps {
@@ -10,7 +10,15 @@ interface LandingViewProps {
 }
 
 const LandingView: React.FC<LandingViewProps> = ({ onStart, onLocationDetected, lang = 'en' }) => {
-  const [selectedCountryCode, setSelectedCountryCode] = useState(COUNTRIES[0]?.code || 'US');
+  const [selectedCountryCode, setSelectedCountryCode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('quickchat_country');
+      if (stored && COUNTRIES.some(c => c.code === stored)) {
+        return stored;
+      }
+    }
+    return COUNTRIES[0]?.code || 'ZA';
+  });
   const [selectedPreferenceId, setSelectedPreferenceId] = useState(PREFERENCES[0]?.id || 'text');
   const [detectedCity, setDetectedCity] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -250,7 +258,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStart, onLocationDetected, 
             </button>
             
             {isCountryOpen && (
-              <div className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-2xl max-h-52 md:max-h-60 overflow-y-auto animate-fadeIn py-2">
+              <div className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-2xl max-h-56 md:max-h-64 overflow-y-auto animate-fadeIn py-2">
                 {COUNTRIES.map((c) => (
                   <button
                     key={c.code}
@@ -270,8 +278,41 @@ const LandingView: React.FC<LandingViewProps> = ({ onStart, onLocationDetected, 
                     {selectedCountryCode === c.code && <i className="fa-solid fa-check text-teal-600 text-[10px] ml-auto"></i>}
                   </button>
                 ))}
+
+                <div className="border-t border-gray-100 mt-1 pt-1.5 px-2">
+                  <a
+                    href={`${ADMIN_WHATSAPP_LINK}?text=${encodeURIComponent('Hi Admin, please add my country to QuickChat')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsCountryOpen(false)}
+                    className="w-full px-3 py-2 flex items-center space-x-2.5 hover:bg-emerald-50 rounded-xl transition-colors text-left group"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                      <i className="fa-brands fa-whatsapp text-xs"></i>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-gray-800 leading-tight">Don't see your country?</p>
+                      <p className="text-[11px] text-emerald-600 font-medium">Chat Admin to add a specific country</p>
+                    </div>
+                    <i className="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-400 group-hover:text-emerald-600 transition-colors"></i>
+                  </a>
+                </div>
               </div>
             )}
+
+            {/* Chat Admin to add a specific country shortcut */}
+            <div className="mt-2 flex items-center justify-between px-1">
+              <span className="text-[11px] text-gray-500">Need another country?</span>
+              <a
+                href={`${ADMIN_WHATSAPP_LINK}?text=${encodeURIComponent('Hi Admin, please add my country to QuickChat')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1.5 text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors"
+              >
+                <i className="fa-brands fa-whatsapp text-xs"></i>
+                <span>Chat Admin to add country</span>
+              </a>
+            </div>
           </div>
 
           {/* Custom Preference Dropdown */}

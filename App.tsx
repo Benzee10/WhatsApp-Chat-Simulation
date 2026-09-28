@@ -17,9 +17,12 @@ const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>('landing');
   const [selectedCountry, setSelectedCountry] = useState(() => {
     if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('quickchat_country') || 'US';
+      const stored = sessionStorage.getItem('quickchat_country');
+      if (stored && COUNTRIES.some(c => c.code === stored)) {
+        return stored;
+      }
     }
-    return 'US';
+    return COUNTRIES[0]?.code || 'ZA';
   });
   const [selectedPreference, setSelectedPreference] = useState('text');
   const [detectedCity, setDetectedCity] = useState<string | undefined>(() => {
@@ -56,8 +59,8 @@ const App: React.FC = () => {
     setUserSelectedLangManually(true);
   };
 
-  const countryData = COUNTRIES.find(c => c.code === selectedCountry);
-  const activeCity = detectedCity || countryData?.city || 'London';
+  const countryData = COUNTRIES.find(c => c.code === selectedCountry) || COUNTRIES[0];
+  const activeCity = detectedCity || countryData?.city || 'Johannesburg';
 
   return (
     <div className="flex flex-col min-h-screen relative overflow-x-hidden">

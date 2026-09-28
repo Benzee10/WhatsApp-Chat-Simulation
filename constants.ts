@@ -4,72 +4,14 @@
  */
 export const SMART_LINK = "https://html-starter-6nu.pages.dev/";
 
-export const COUNTRIES = [
-  // Global High Traffic
-  { code: 'US', name: 'USA', flag: '🇺🇸', phoneCode: '1', city: 'New York' },
-  { code: 'GB', name: 'UK', flag: '🇬🇧', phoneCode: '44', city: 'London' },
-  { code: 'CA', name: 'Canada', flag: '🇨🇦', phoneCode: '1', city: 'Toronto' },
-  { code: 'AU', name: 'Australia', flag: '🇦🇺', phoneCode: '61', city: 'Sydney' },
-  { code: 'DE', name: 'Germany', flag: '🇩🇪', phoneCode: '49', city: 'Berlin' },
-  { code: 'FR', name: 'France', flag: '🇫🇷', phoneCode: '33', city: 'Paris' },
-  { code: 'BR', name: 'Brazil', flag: '🇧🇷', phoneCode: '55', city: 'São Paulo' },
-  { code: 'IN', name: 'India', flag: '🇮🇳', phoneCode: '91', city: 'Mumbai' },
+/**
+ * WhatsApp chat link for Admin to request adding a specific country
+ */
+export const ADMIN_WHATSAPP_LINK = "https://wa.me/27836468294";
 
-  // African Nations
-  { code: 'DZ', name: 'Algeria', flag: '🇩🇿', phoneCode: '213', city: 'Algiers' },
-  { code: 'AO', name: 'Angola', flag: '🇦🇴', phoneCode: '244', city: 'Luanda' },
-  { code: 'BJ', name: 'Benin', flag: '🇧🇯', phoneCode: '229', city: 'Porto-Novo' },
-  { code: 'BW', name: 'Botswana', flag: '🇧🇼', phoneCode: '267', city: 'Gaborone' },
-  { code: 'BF', name: 'Burkina Faso', flag: '🇧🇫', phoneCode: '226', city: 'Ouagadougou' },
-  { code: 'BI', name: 'Burundi', flag: '🇧🇮', phoneCode: '257', city: 'Bujumbura' },
-  { code: 'CV', name: 'Cabo Verde', flag: '🇨🇻', phoneCode: '238', city: 'Praia' },
-  { code: 'CM', name: 'Cameroon', flag: '🇨🇲', phoneCode: '237', city: 'Yaoundé' },
-  { code: 'CF', name: 'Central African Republic', flag: '🇨🇫', phoneCode: '236', city: 'Bangui' },
-  { code: 'TD', name: 'Chad', flag: '🇹🇩', phoneCode: '235', city: "N'Djamena" },
-  { code: 'KM', name: 'Comoros', flag: '🇰🇲', phoneCode: '269', city: 'Moroni' },
-  { code: 'CG', name: 'Congo', flag: '🇨🇬', phoneCode: '242', city: 'Brazzaville' },
-  { code: 'CD', name: 'Congo (DRC)', flag: '🇨🇩', phoneCode: '243', city: 'Kinshasa' },
-  { code: 'DJ', name: 'Djibouti', flag: '🇩🇯', phoneCode: '253', city: 'Djibouti' },
-  { code: 'EG', name: 'Egypt', flag: '🇪🇬', phoneCode: '20', city: 'Cairo' },
-  { code: 'GQ', name: 'Equatorial Guinea', flag: '🇬🇶', phoneCode: '240', city: 'Malabo' },
-  { code: 'ER', name: 'Eritrea', flag: '🇪🇷', phoneCode: '291', city: 'Asmara' },
-  { code: 'SZ', name: 'Eswatini', flag: '🇸🇿', phoneCode: '268', city: 'Mbabane' },
-  { code: 'ET', name: 'Ethiopia', flag: '🇪🇹', phoneCode: '251', city: 'Addis Ababa' },
-  { code: 'GA', name: 'Gabon', flag: '🇬🇦', phoneCode: '241', city: 'Libreville' },
-  { code: 'GM', name: 'Gambia', flag: '🇬🇲', phoneCode: '220', city: 'Banjul' },
-  { code: 'GH', name: 'Ghana', flag: '🇬🇭', phoneCode: '233', city: 'Accra' },
-  { code: 'GN', name: 'Guinea', flag: '🇬🇳', phoneCode: '224', city: 'Conakry' },
-  { code: 'GW', name: 'Guinea-Bissau', flag: '🇬🇼', phoneCode: '245', city: 'Bissau' },
-  { code: 'CI', name: 'Ivory Coast', flag: '🇨🇮', phoneCode: '225', city: 'Abidjan' },
-  { code: 'KE', name: 'Kenya', flag: '🇰🇪', phoneCode: '254', city: 'Nairobi' },
-  { code: 'LS', name: 'Lesotho', flag: '🇱🇸', phoneCode: '266', city: 'Maseru' },
-  { code: 'LR', name: 'Liberia', flag: '🇱🇷', phoneCode: '231', city: 'Monrovia' },
-  { code: 'LY', name: 'Libya', flag: '🇱🇾', phoneCode: '218', city: 'Tripoli' },
-  { code: 'MG', name: 'Madagascar', flag: '🇲🇬', phoneCode: '261', city: 'Antananarivo' },
-  { code: 'MW', name: 'Malawi', flag: '🇲🇼', phoneCode: '265', city: 'Lilongwe' },
-  { code: 'ML', name: 'Mali', flag: '🇲🇱', phoneCode: '223', city: 'Bamako' },
-  { code: 'MR', name: 'Mauritania', flag: '🇲🇷', phoneCode: '222', city: 'Nouakchott' },
-  { code: 'MU', name: 'Mauritius', flag: '🇲🇺', phoneCode: '230', city: 'Port Louis' },
-  { code: 'MA', name: 'Morocco', flag: '🇲🇦', phoneCode: '212', city: 'Casablanca' },
-  { code: 'MZ', name: 'Mozambique', flag: '🇲🇿', phoneCode: '258', city: 'Maputo' },
-  { code: 'NA', name: 'Namibia', flag: '🇳🇦', phoneCode: '264', city: 'Windhoek' },
-  { code: 'NE', name: 'Niger', flag: '🇳🇪', phoneCode: '227', city: 'Niamey' },
-  { code: 'NG', name: 'Nigeria', flag: '🇳🇬', phoneCode: '234', city: 'Lagos' },
-  { code: 'RW', name: 'Rwanda', flag: '🇷🇼', phoneCode: '250', city: 'Kigali' },
-  { code: 'ST', name: 'Sao Tome and Principe', flag: '🇸🇹', phoneCode: '239', city: 'São Tomé' },
-  { code: 'SN', name: 'Senegal', flag: '🇸🇳', phoneCode: '221', city: 'Dakar' },
-  { code: 'SC', name: 'Seychelles', flag: '🇸🇨', phoneCode: '248', city: 'Victoria' },
-  { code: 'SL', name: 'Sierra Leone', flag: '🇸🇱', phoneCode: '232', city: 'Freetown' },
-  { code: 'SO', name: 'Somalia', flag: '🇸🇴', phoneCode: '252', city: 'Mogadishu' },
+export const COUNTRIES = [
   { code: 'ZA', name: 'South Africa', flag: '🇿🇦', phoneCode: '27', city: 'Johannesburg' },
-  { code: 'SS', name: 'South Sudan', flag: '🇸🇸', phoneCode: '211', city: 'Juba' },
-  { code: 'SD', name: 'Sudan', flag: '🇸🇩', phoneCode: '249', city: 'Khartoum' },
-  { code: 'TZ', name: 'Tanzania', flag: '🇹🇿', phoneCode: '255', city: 'Dar es Salaam' },
-  { code: 'TG', name: 'Togo', flag: '🇹🇬', phoneCode: '228', city: 'Lomé' },
-  { code: 'TN', name: 'Tunisia', flag: '🇹🇳', phoneCode: '216', city: 'Tunis' },
-  { code: 'UG', name: 'Uganda', flag: '🇺🇬', phoneCode: '256', city: 'Kampala' },
-  { code: 'ZM', name: 'Zambia', flag: '🇿🇲', phoneCode: '260', city: 'Lusaka' },
-  { code: 'ZW', name: 'Zimbabwe', flag: '🇿🇼', phoneCode: '263', city: 'Harare' },
+  { code: 'NG', name: 'Nigeria', flag: '🇳🇬', phoneCode: '234', city: 'Lagos' },
 ];
 
 export const PREFERENCES = [
@@ -311,4 +253,48 @@ export const generateNigerianPhoneNumber = (): string => {
   }
   return `${prefix}${remainingDigits}`;
 };
+
+/**
+ * South African Mobile Network Prefixes
+ */
+export const SOUTH_AFRICAN_PHONE_PREFIXES = [
+  '060',
+  '061',
+  '062',
+  '063',
+  '064',
+  '065',
+  '066',
+  '067',
+  '068',
+  '069',
+  '071',
+  '072',
+  '073',
+  '074',
+  '076',
+  '078',
+  '079',
+  '081',
+  '082',
+  '083',
+  '084'
+];
+
+/**
+ * Generates random South African phone number in Local format:
+ * "XXXXXXXXXX" e.g. "0712345678"
+ * 1. Randomly select one valid South African mobile prefix from the lists above.
+ * 2. Generate the remaining 7 digits randomly.
+ * 3. Do not use spaces, hyphens, brackets, or other formatting characters.
+ */
+export const generateSouthAfricanPhoneNumber = (): string => {
+  const prefix = SOUTH_AFRICAN_PHONE_PREFIXES[Math.floor(Math.random() * SOUTH_AFRICAN_PHONE_PREFIXES.length)];
+  let remainingDigits = '';
+  for (let i = 0; i < 7; i++) {
+    remainingDigits += Math.floor(Math.random() * 10).toString();
+  }
+  return `${prefix}${remainingDigits}`;
+};
+
 
