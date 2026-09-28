@@ -30,6 +30,11 @@ export interface Translations {
     storiesSubtitle: string;
     verified: string;
     disclaimer: string;
+    useExactLocation?: string;
+    exactLocationBadge?: string;
+    locatingExact?: string;
+    exactMatchesDesc?: string;
+    approxMatchesDesc?: string;
   };
   quiz: {
     headerTitle: string;
@@ -128,7 +133,12 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
       storiesTitle: "Recent Success Stories",
       storiesSubtitle: "Real connections made today",
       verified: "Verified",
-      disclaimer: "By continuing you confirm you are 18+ and agree to community standards."
+      disclaimer: "By continuing you confirm you are 18+ and agree to community standards.",
+      useExactLocation: "Use exact location",
+      exactLocationBadge: "Exact GPS",
+      locatingExact: "Acquiring exact GPS location...",
+      exactMatchesDesc: "Matching with verified users in your exact neighborhood",
+      approxMatchesDesc: "Estimated regional location · Tap to use exact GPS"
     },
     quiz: {
       headerTitle: "Quick Verification",

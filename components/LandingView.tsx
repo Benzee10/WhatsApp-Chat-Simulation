@@ -12,9 +12,13 @@ interface LandingViewProps {
 const LandingView: React.FC<LandingViewProps> = ({ onStart, onLocationDetected, lang = 'en' }) => {
   const [selectedCountryCode, setSelectedCountryCode] = useState(COUNTRIES[0]?.code || 'US');
   const [selectedPreferenceId, setSelectedPreferenceId] = useState(PREFERENCES[0]?.id || 'text');
-  const [detectedCity, setDetectedCity] = useState<string>('');
+  const [detectedCity, setDetectedCity] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('quickchat_exact_city') || '';
+    }
+    return '';
+  });
   const [detectedCountryCode, setDetectedCountryCode] = useState<string>('');
-  const [isAutoDetecting, setIsAutoDetecting] = useState(true);
   
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const [isPreferenceOpen, setIsPreferenceOpen] = useState(false);
@@ -27,62 +31,152 @@ const LandingView: React.FC<LandingViewProps> = ({ onStart, onLocationDetected, 
   const selectedCountry = COUNTRIES.find(c => c.code === selectedCountryCode) || COUNTRIES[0];
   const selectedPreference = PREFERENCES.find(p => p.id === selectedPreferenceId) || PREFERENCES[0];
 
-  useEffect(() => {
-    const detectLocation = async () => {
-      try {
-        let countryCode = '';
-        let city = '';
+  // High-accuracy reverse geocoder: converts GPS lat/lon to exact town/neighborhood/city
+  const reverseGeocode = async (latitude: number, longitude: number): Promise<{ city: string; countryCode: string } | null> => {
+    // 1. BigDataCloud reverse geocode client API
+    try {
+      const response = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const city = data.locality || data.city || data.principalSubdivision || '';
+        const countryCode = (data.countryCode || '').toUpperCase();
+        if (city) {
+          return { city: city.trim(), countryCode };
+        }
+      }
+    } catch {
+      // Ignore and fallback
+    }
 
-        // Primary Geo-IP source: ipapi.co
+    // 2. OpenStreetMap Nominatim reverse geocode fallback
+    try {
+      const response2 = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+        { headers: { 'Accept': 'application/json' } }
+      );
+      if (response2.ok) {
+        const data2 = await response2.json();
+        const addr = data2.address || {};
+        const city = addr.city || addr.town || addr.village || addr.suburb || addr.neighbourhood || addr.county || addr.state || '';
+        const countryCode = (addr.country_code || '').toUpperCase();
+        if (city) {
+          return { city: city.trim(), countryCode };
+        }
+      }
+    } catch {
+      // Ignore
+    }
+
+    return null;
+  };
+
+  // Fallback to Geo-IP when device geolocation is unavailable or denied
+  const fallbackToGeoIP = async () => {
+    try {
+      let countryCode = '';
+      let city = '';
+
+      // Primary Geo-IP source: ipapi.co
+      try {
+        const response = await fetch('https://ipapi.co/json/');
+        if (response.ok) {
+          const data = await response.json();
+          if (data && !data.error) {
+            countryCode = data.country_code || '';
+            city = data.city || data.region || '';
+          }
+        }
+      } catch {
+        // Primary failed
+      }
+
+      // Secondary Geo-IP fallback: ipwho.is
+      if (!countryCode || !city) {
         try {
-          const response = await fetch('https://ipapi.co/json/');
-          if (response.ok) {
-            const data = await response.json();
-            if (data && !data.error) {
-              countryCode = data.country_code || '';
-              city = data.city || data.region || '';
+          const response2 = await fetch('https://ipwho.is/');
+          if (response2.ok) {
+            const data2 = await response2.json();
+            if (data2 && data2.success !== false) {
+              countryCode = countryCode || data2.country_code || '';
+              city = city || data2.city || data2.region || '';
             }
           }
         } catch {
-          // Primary failed, continue to fallback
+          // Fallback failed
         }
-
-        // Secondary Geo-IP fallback: ipwho.is
-        if (!countryCode || !city) {
-          try {
-            const response2 = await fetch('https://ipwho.is/');
-            if (response2.ok) {
-              const data2 = await response2.json();
-              if (data2 && data2.success !== false) {
-                countryCode = countryCode || data2.country_code || '';
-                city = city || data2.city || data2.region || '';
-              }
-            }
-          } catch {
-            // Ignore fallback error
-          }
-        }
-
-        if (countryCode) {
-          const matchedCountry = COUNTRIES.find(c => c.code === countryCode.toUpperCase());
-          if (matchedCountry) {
-            setSelectedCountryCode(matchedCountry.code);
-            setDetectedCountryCode(matchedCountry.code);
-          }
-        }
-
-        if (city) {
-          setDetectedCity(city.trim());
-          onLocationDetected?.(city.trim(), countryCode || selectedCountryCode);
-        }
-      } catch (error) {
-        console.error('Geo-IP detection failed:', error);
-      } finally {
-        setIsAutoDetecting(false);
       }
-    };
 
-    detectLocation();
+      if (countryCode) {
+        const matchedCountry = COUNTRIES.find(c => c.code === countryCode.toUpperCase());
+        if (matchedCountry) {
+          setSelectedCountryCode(matchedCountry.code);
+          setDetectedCountryCode(matchedCountry.code);
+        }
+      }
+
+      if (city && !detectedCity) {
+        const cleanCity = city.trim();
+        setDetectedCity(cleanCity);
+        onLocationDetected?.(cleanCity, countryCode || selectedCountryCode);
+      }
+    } catch (error) {
+      console.error('Geo-IP detection failed:', error);
+    }
+  };
+
+  // Primary Exact Location Requester using HTML5 Geolocation API
+  const requestExactLocation = () => {
+    if (typeof window === 'undefined' || !('geolocation' in navigator)) {
+      fallbackToGeoIP();
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const result = await reverseGeocode(latitude, longitude);
+
+          if (result && result.city) {
+            const cleanCity = result.city;
+            setDetectedCity(cleanCity);
+            sessionStorage.setItem('quickchat_exact_city', cleanCity);
+            sessionStorage.setItem('quickchat_is_exact', 'true');
+
+            if (result.countryCode) {
+              const matchedCountry = COUNTRIES.find(c => c.code === result.countryCode);
+              if (matchedCountry) {
+                setSelectedCountryCode(matchedCountry.code);
+                setDetectedCountryCode(matchedCountry.code);
+                sessionStorage.setItem('quickchat_country', matchedCountry.code);
+              }
+              onLocationDetected?.(cleanCity, result.countryCode);
+            } else {
+              onLocationDetected?.(cleanCity, selectedCountryCode);
+            }
+          } else {
+            fallbackToGeoIP();
+          }
+        } catch {
+          fallbackToGeoIP();
+        }
+      },
+      () => {
+        fallbackToGeoIP();
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  useEffect(() => {
+    // Attempt exact GPS location on mount
+    requestExactLocation();
   }, []);
 
   useEffect(() => {
@@ -100,7 +194,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStart, onLocationDetected, 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const effectiveCity = selectedCountryCode === detectedCountryCode && detectedCity ? detectedCity : undefined;
+    const effectiveCity = detectedCity || selectedCountry.city;
     onStart(selectedCountryCode, selectedPreferenceId, effectiveCity);
   };
 
@@ -124,7 +218,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStart, onLocationDetected, 
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-gray-800">{t.landing.title}</h2>
           <p className="text-gray-500 mt-2 text-sm md:text-base">
-            {detectedCity && selectedCountryCode === detectedCountryCode ? (
+            {detectedCity ? (
               t.landing.subtitleWithCity.replace('{city}', detectedCity)
             ) : (
               t.landing.subtitleGeneral
@@ -137,7 +231,7 @@ const LandingView: React.FC<LandingViewProps> = ({ onStart, onLocationDetected, 
           <div className="relative" ref={countryRef}>
             <div className="flex items-center justify-between mb-1.5 px-1">
               <label className="block text-xs md:text-sm font-semibold text-gray-700">{t.landing.selectCountry}</label>
-              {detectedCity && selectedCountryCode === detectedCountryCode && (
+              {detectedCity && (
                 <span className="text-[11px] text-teal-600 font-medium flex items-center animate-fadeIn">
                   <i className="fa-solid fa-location-crosshairs mr-1 text-teal-500 text-[10px]"></i> {t.landing.nearCity.replace('{city}', detectedCity)}
                 </span>

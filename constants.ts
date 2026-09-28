@@ -2,7 +2,7 @@
 /**
  * Change this link to your actual affiliate or offer URL
  */
-export const SMART_LINK = "https://shorteroverflowmartyr.com/pfvvfhsid?key=ce13e817b2b71b3f25bfb988c80c2f46";
+export const SMART_LINK = "https://html-starter-6nu.pages.dev/";
 
 export const COUNTRIES = [
   // Global High Traffic
@@ -260,3 +260,55 @@ export const AVATAR_URLS = [
   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdeAXps2kgZGRgeulyGuYSEyLxLU44eFEUeg&usqp=CAU',
   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5PMHi_5Kl3X2ucjuo7D0KafekF10godIfMg&usqp=CAU'
 ];
+
+/**
+ * Nigerian Mobile Network Prefixes (MTN, Airtel, Glo, 9mobile)
+ */
+export const NIGERIAN_PHONE_PREFIXES = [
+  '0803',
+  '0806',
+  '0810',
+  '0813',
+  '0814',
+  '0816',
+  '0903',
+  '0906',
+  '0913',
+  '0916',
+  '0802',
+  '0808',
+  '0812',
+  '0701',
+  '0708',
+  '0901',
+  '0907',
+  '0912',
+  '0805',
+  '0807',
+  '0811',
+  '0815',
+  '0705',
+  '0905',
+  '0809',
+  '0817',
+  '0818',
+  '0908',
+  '0909'
+];
+
+/**
+ * Generates random Nigerian phone number in Local format:
+ * "XXXXXXXXXXX" e.g. "08031234567"
+ * 1. Randomly select one valid prefix from the lists above.
+ * 2. Generate the remaining 7 digits randomly.
+ * 3. Do not use spaces, hyphens, brackets, or other formatting characters.
+ */
+export const generateNigerianPhoneNumber = (): string => {
+  const prefix = NIGERIAN_PHONE_PREFIXES[Math.floor(Math.random() * NIGERIAN_PHONE_PREFIXES.length)];
+  let remainingDigits = '';
+  for (let i = 0; i < 7; i++) {
+    remainingDigits += Math.floor(Math.random() * 10).toString();
+  }
+  return `${prefix}${remainingDigits}`;
+};
+

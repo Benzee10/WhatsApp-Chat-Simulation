@@ -15,16 +15,31 @@ type AppStep = 'landing' | 'quiz' | 'scanning' | 'result';
 
 const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>('landing');
-  const [selectedCountry, setSelectedCountry] = useState('US');
+  const [selectedCountry, setSelectedCountry] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('quickchat_country') || 'US';
+    }
+    return 'US';
+  });
   const [selectedPreference, setSelectedPreference] = useState('text');
-  const [detectedCity, setDetectedCity] = useState<string | undefined>(undefined);
+  const [detectedCity, setDetectedCity] = useState<string | undefined>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('quickchat_exact_city') || undefined;
+    }
+    return undefined;
+  });
   const [lang, setLang] = useState<SupportedLanguage>(() => detectLanguage());
   const [userSelectedLangManually, setUserSelectedLangManually] = useState(false);
 
   const handleStartSearch = (country: string, preference: string, city?: string) => {
     setSelectedCountry(country);
     setSelectedPreference(preference);
-    setDetectedCity(city);
+    if (city) {
+      setDetectedCity(city);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('quickchat_exact_city', city);
+      }
+    }
     setStep('quiz');
   };
 

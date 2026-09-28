@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { SupportedLanguage, TRANSLATIONS } from '../translations';
 
 interface WhatsAppShareGateProps {
@@ -21,9 +21,7 @@ const WhatsAppShareGate: React.FC<WhatsAppShareGateProps> = ({
   const t = TRANSLATIONS[lang]?.shareGate || TRANSLATIONS.en.shareGate;
 
   const progressPercent = Math.min(100, Math.round((sharesCount / 3) * 100));
-  const remaining = Math.max(0, 3 - sharesCount);
 
-  // Derive the shareable URL
   const getShareUrl = () => {
     if (typeof window !== 'undefined') {
       return window.location.href.split('#')[0];
@@ -36,10 +34,7 @@ const WhatsAppShareGate: React.FC<WhatsAppShareGateProps> = ({
     const message = t.viralMessage.replace('{link}', shareUrl);
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 
-    // Open WhatsApp in new window/tab
     window.open(whatsappUrl, '_blank');
-
-    // Trigger state change
     setJustShared(true);
     onShare();
 
@@ -59,82 +54,34 @@ const WhatsAppShareGate: React.FC<WhatsAppShareGateProps> = ({
   return (
     <div
       id="whatsapp-share-gate"
-      className={`rounded-2xl transition-all duration-300 p-5 md:p-6 mb-6 border ${
+      className={`rounded-2xl transition-all duration-300 p-4 md:p-5 mb-6 border ${
         sharesCount >= 3
-          ? 'bg-gradient-to-br from-teal-900/10 via-green-50 to-teal-50 border-teal-300 shadow-md'
+          ? 'bg-emerald-50/50 border-emerald-300 shadow-xs'
           : isHighlighted
-          ? 'bg-amber-50/80 border-amber-400 shadow-xl ring-4 ring-amber-300/50 scale-[1.01]'
-          : 'bg-gradient-to-b from-gray-50 to-emerald-50/30 border-emerald-200 shadow-sm'
+          ? 'bg-amber-50/90 border-amber-400 ring-2 ring-amber-300/60 shadow-md'
+          : 'bg-zinc-50/80 border-zinc-200 shadow-xs'
       }`}
     >
-      {/* Header Tag */}
-      <div className="flex items-center justify-between mb-3">
-        <span
-          className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full flex items-center space-x-1 ${
-            sharesCount >= 3
-              ? 'bg-teal-600 text-white shadow-xs'
-              : 'bg-amber-500 text-white shadow-xs animate-pulse'
-          }`}
-        >
-          <i
-            className={`fa-solid ${
-              sharesCount >= 3 ? 'fa-circle-check' : 'fa-triangle-exclamation'
-            } mr-1 text-[11px]`}
-          ></i>
-          <span>{sharesCount >= 3 ? t.congratsTitle : t.badge}</span>
+      {/* Header Info - Clean unboxed text */}
+      <div className="flex items-center justify-between text-xs font-semibold text-zinc-700 mb-2">
+        <span className="flex items-center space-x-1.5">
+          <i className="fa-brands fa-whatsapp text-emerald-600 text-sm"></i>
+          <span>{sharesCount >= 3 ? t.congratsTitle : t.title}</span>
         </span>
-        <span className="text-xs font-black text-gray-700">
+        <span className="text-[11px] font-mono text-zinc-500">
           {sharesCount}/3 {t.groupLabel}s
         </span>
       </div>
 
-      {/* Main Title & Subtitle */}
-      <div className="mb-4">
-        <h3 className="text-base md:text-lg font-black text-gray-900 leading-snug flex items-center">
-          <i className="fa-brands fa-whatsapp text-green-600 text-xl mr-2"></i>
-          {sharesCount >= 3 ? t.congratsTitle : t.title}
-        </h3>
-        <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-          {sharesCount >= 3
-            ? t.congratsDesc.replace('{name}', targetName)
-            : t.description}
-        </p>
-      </div>
+      <p className="text-xs text-zinc-600 mb-3 leading-relaxed">
+        {sharesCount >= 3
+          ? t.congratsDesc.replace('{name}', targetName)
+          : t.description}
+      </p>
 
-      {/* Progress Bar Container */}
-      <div className="bg-white/80 backdrop-blur-xs p-3.5 rounded-xl border border-gray-200/80 mb-4 shadow-xs">
-        <div className="flex justify-between items-center text-xs font-bold mb-1.5">
-          <span className="text-gray-700 flex items-center">
-            <i className="fa-solid fa-chart-pie text-teal-600 mr-1.5 text-[11px]"></i>
-            {t.progressLabel}
-          </span>
-          <span
-            className={`font-black ${
-              sharesCount >= 3 ? 'text-teal-600' : 'text-amber-600'
-            }`}
-          >
-            {progressPercent}%
-          </span>
-        </div>
-
-        {/* Bar */}
-        <div className="w-full bg-gray-200 h-3 rounded-full overflow-hidden p-0.5 relative">
-          <div
-            className={`h-full rounded-full transition-all duration-700 ease-out flex items-center justify-end ${
-              sharesCount >= 3
-                ? 'bg-gradient-to-r from-teal-500 to-green-500'
-                : 'bg-gradient-to-r from-amber-500 via-teal-500 to-[#25d366]'
-            }`}
-            style={{ width: `${progressPercent}%` }}
-          >
-            {progressPercent > 10 && (
-              <span className="w-2 h-2 rounded-full bg-white/70 mr-0.5 animate-pulse"></span>
-            )}
-          </div>
-        </div>
-
-        {/* 3 Step Badges */}
-        <div className="grid grid-cols-3 gap-2 mt-3 pt-2 border-t border-gray-100">
+      {/* Minimalist 3-Step Segmented Progress */}
+      <div className="space-y-2 mb-4">
+        <div className="grid grid-cols-3 gap-1.5">
           {[1, 2, 3].map((stepNum) => {
             const isCompleted = sharesCount >= stepNum;
             const isCurrent = sharesCount === stepNum - 1;
@@ -142,45 +89,46 @@ const WhatsAppShareGate: React.FC<WhatsAppShareGateProps> = ({
             return (
               <div
                 key={stepNum}
-                className={`p-2 rounded-lg text-center transition-all ${
+                className={`py-1.5 px-2 rounded-lg text-center transition-all text-[11px] font-medium border ${
                   isCompleted
-                    ? 'bg-teal-50 border border-teal-200 text-teal-800'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                     : isCurrent
-                    ? 'bg-amber-50 border border-amber-300 text-amber-900 shadow-xs'
-                    : 'bg-gray-50/70 border border-gray-200 text-gray-400 opacity-70'
+                    ? 'bg-white border-zinc-300 text-zinc-900 shadow-xs'
+                    : 'bg-zinc-100/60 border-zinc-200/60 text-zinc-400'
                 }`}
               >
-                <div className="flex items-center justify-center space-x-1 mb-0.5">
+                <div className="flex items-center justify-center space-x-1">
                   <i
-                    className={`fa-solid text-[10px] ${
+                    className={`fa-solid text-[9px] ${
                       isCompleted
-                        ? 'fa-circle-check text-teal-600'
+                        ? 'fa-check text-emerald-600'
                         : isCurrent
-                        ? 'fa-spinner fa-spin text-amber-600'
-                        : 'fa-lock text-gray-400'
+                        ? 'fa-circle-dot text-emerald-600 animate-pulse'
+                        : 'fa-lock text-zinc-300'
                     }`}
                   ></i>
-                  <span className="text-[10px] font-bold">
-                    {t.groupLabel} #{stepNum}
+                  <span className="text-[10px]">
+                    Step {stepNum}
                   </span>
                 </div>
-                <span className="text-[9px] block font-medium">
-                  {isCompleted
-                    ? '✓ Verified'
-                    : isCurrent
-                    ? 'Next Step'
-                    : 'Locked'}
-                </span>
               </div>
             );
           })}
         </div>
+
+        {/* Slender Progress Line */}
+        <div className="w-full bg-zinc-200 h-1.5 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          ></div>
+        </div>
       </div>
 
-      {/* Dynamic Feedback Toast for recent share */}
+      {/* Share Toast Confirmation */}
       {justShared && sharesCount < 3 && (
-        <div className="bg-teal-100/90 border border-teal-300 text-teal-900 p-2.5 rounded-xl text-xs font-semibold mb-3 flex items-center space-x-2 animate-fadeIn">
-          <i className="fa-solid fa-circle-check text-teal-600 text-sm"></i>
+        <div className="bg-emerald-100/80 border border-emerald-300 text-emerald-900 py-1.5 px-3 rounded-lg text-xs font-medium mb-3 flex items-center space-x-2 animate-fadeIn">
+          <i className="fa-solid fa-check text-emerald-600 text-xs"></i>
           <span>
             {sharesCount === 1
               ? t.step1Done
@@ -191,48 +139,40 @@ const WhatsAppShareGate: React.FC<WhatsAppShareGateProps> = ({
         </div>
       )}
 
-      {/* Main Action Button */}
+      {/* Action Controls */}
       {sharesCount < 3 ? (
         <div className="space-y-2">
           <button
             type="button"
             onClick={handleShareClick}
-            className="w-full whatsapp-green text-white font-black py-3.5 px-4 rounded-xl shadow-md hover:brightness-105 active:scale-[0.98] transition-all flex flex-col items-center justify-center space-y-0.5 group"
+            className="w-full whatsapp-green text-white font-bold py-3 px-4 rounded-xl shadow-xs hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center space-x-2 text-sm"
           >
-            <div className="flex items-center space-x-2 text-sm md:text-base">
-              <i className="fa-brands fa-whatsapp text-xl group-hover:scale-110 transition-transform"></i>
-              <span>
-                {sharesCount === 0
-                  ? t.shareBtn
-                  : sharesCount === 1
-                  ? t.shareBtnNext
-                  : t.shareBtnFinal}
-              </span>
-            </div>
-            <span className="text-[10px] text-teal-100 font-medium">
-              Tap to open WhatsApp & select a group
+            <i className="fa-brands fa-whatsapp text-lg"></i>
+            <span>
+              {sharesCount === 0
+                ? t.shareBtn
+                : sharesCount === 1
+                ? t.shareBtnNext
+                : t.shareBtnFinal}
             </span>
           </button>
 
-          {/* Fallback Copy Link Option */}
-          <div className="flex items-center justify-center space-x-2 pt-1 text-[11px] text-gray-500">
-            <span>Or copy invite link:</span>
+          <div className="flex items-center justify-center space-x-2 pt-1 text-[11px] text-zinc-500">
+            <span>Or copy link:</span>
             <button
               type="button"
               onClick={handleCopyLink}
-              className="text-teal-700 font-bold hover:underline flex items-center space-x-1"
+              className="text-emerald-700 font-semibold hover:underline flex items-center space-x-1"
             >
-              <i className={`fa-solid ${copied ? 'fa-check text-green-600' : 'fa-copy'}`}></i>
+              <i className={`fa-solid ${copied ? 'fa-check text-emerald-600' : 'fa-copy'}`}></i>
               <span>{copied ? t.linkCopied : t.copyLink}</span>
             </button>
           </div>
         </div>
       ) : (
-        <div className="bg-teal-600 text-white p-3.5 rounded-xl shadow-xs text-center flex items-center justify-center space-x-2 animate-fadeIn">
-          <i className="fa-solid fa-circle-check text-lg text-yellow-300"></i>
-          <span className="text-xs md:text-sm font-black tracking-wide">
-            {t.unlockedBtn}
-          </span>
+        <div className="bg-emerald-600 text-white py-2.5 px-3.5 rounded-xl shadow-xs text-center flex items-center justify-center space-x-2 animate-fadeIn text-xs font-bold">
+          <i className="fa-solid fa-circle-check text-sm text-white"></i>
+          <span>{t.unlockedBtn}</span>
         </div>
       )}
     </div>
