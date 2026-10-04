@@ -1,9 +1,9 @@
 /**
  * QuickChat Configuration and Data Constants
  */
-export const SMART_LINK = "https://html-starter-6nu.pages.dev/";
+export const SMART_LINK = "https://lovelydates.short.gy/rdgHt1";
 export const MESSAGE_INVITE_LINK = "https://lovelydates.short.gy/rdgHt1";
-export const FREE_DAILY_GENERATIONS = 5;
+export const FREE_DAILY_GENERATIONS = 20;
 
 export const COUNTRIES = [
   { code: 'ZA', name: 'South Africa', flag: '🇿🇦', phoneCode: '27', city: 'Johannesburg' },
