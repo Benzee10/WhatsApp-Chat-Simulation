@@ -1,21 +1,65 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { SMART_LINK, NAMES, COUNTRIES, AVATAR_URLS, generateNigerianPhoneNumber, generateSouthAfricanPhoneNumber } from '../constants';
-import TeaserChatPreview from './TeaserChatPreview';
-import { SupportedLanguage, TRANSLATIONS } from '../translations';
+import React, { useMemo, useEffect, useState } from 'react';
+import confetti from 'canvas-confetti';
+import BannerAd from './BannerAd';
+import { 
+  SMART_LINK, 
+  MESSAGE_INVITE_LINK, 
+  FREE_DAILY_GENERATIONS, 
+  COUNTRIES, 
+  generateNigerianPhoneNumber, 
+  generateSouthAfricanPhoneNumber, 
+  generateGhanaianPhoneNumber 
+} from '../constants';
+import { SupportedLanguage } from '../translations';
 
 interface ResultViewProps {
   country: string;
-  preference: string;
-  detectedCity?: string;
   lang?: SupportedLanguage;
+  onRegenerate?: () => void;
 }
 
 const DAILY_CHAT_KEY = 'quickchat_daily_chat_usage';
+const SEEN_NUMBERS_KEY = 'quickchat_seen_phone_numbers';
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days retention
 
 interface DailyChatData {
   date: string; // YYYY-MM-DD
   count: number;
 }
+
+interface SeenNumberEntry {
+  num: string;
+  ts: number;
+}
+
+const getSeenNumbersSet = (): Set<string> => {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(SEEN_NUMBERS_KEY);
+    if (!raw) return new Set();
+    const records: SeenNumberEntry[] = JSON.parse(raw);
+    const now = Date.now();
+    const valid = records.filter(r => now - r.ts < THIRTY_DAYS_MS);
+    return new Set(valid.map(r => r.num));
+  } catch {
+    return new Set();
+  }
+};
+
+const saveSeenNumber = (num: string) => {
+  if (typeof window === 'undefined' || !num) return;
+  try {
+    const raw = localStorage.getItem(SEEN_NUMBERS_KEY);
+    const records: SeenNumberEntry[] = raw ? JSON.parse(raw) : [];
+    const now = Date.now();
+    // Retain only entries within the last 30 days, avoiding duplicate entries
+    const updated = records.filter(r => now - r.ts < THIRTY_DAYS_MS && r.num !== num);
+    updated.push({ num, ts: now });
+    localStorage.setItem(SEEN_NUMBERS_KEY, JSON.stringify(updated));
+  } catch {
+    // Ignore storage quota or disabled errors
+  }
+};
 
 const getTodayDateStr = () => {
   const d = new Date();
@@ -51,208 +95,178 @@ const incrementDailyChats = (): number => {
   }
 };
 
-const ResultView: React.FC<ResultViewProps> = ({ country, preference, detectedCity, lang = 'en' }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [showNotification, setShowNotification] = useState(false);
-  const [dailyChatsUsed, setDailyChatsUsed] = useState<number>(() => getDailyChatsUsed());
-  const [timeLeft, setTimeLeft] = useState(299); // 5 minutes in seconds
-
-  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!isLoading) {
-      const notificationTimer = setTimeout(() => {
-        setShowNotification(true);
-        setTimeout(() => setShowNotification(false), 4500);
-      }, 3500);
-      return () => clearTimeout(notificationTimer);
-    }
-  }, [isLoading]);
-
-  useEffect(() => {
-    if (timeLeft <= 0 || isLoading) return;
-    const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft, isLoading]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const randomName = useMemo(() => {
-    return NAMES[Math.floor(Math.random() * NAMES.length)];
-  }, []);
-
-  const randomAvatar = useMemo(() => AVATAR_URLS[Math.floor(Math.random() * AVATAR_URLS.length)], []);
+const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegenerate }) => {
   const countryData = useMemo(() => COUNTRIES.find(c => c.code === country), [country]);
-  const displayCity = useMemo(() => {
-    if (detectedCity?.trim()) return detectedCity.trim();
-    if (typeof window !== 'undefined') {
-      const cached = sessionStorage.getItem('quickchat_exact_city');
-      if (cached?.trim()) return cached.trim();
-    }
-    return countryData?.city || 'Your Area';
-  }, [detectedCity, countryData]);
 
-  // Generates randomized phone number for WhatsApp direct link without displaying it on screen
-  const phoneNumber = useMemo(() => {
-    const isNigeria = country === 'NG' || countryData?.code === 'NG' || countryData?.phoneCode === '234';
-    const isSouthAfrica = country === 'ZA' || countryData?.code === 'ZA' || countryData?.phoneCode === '27';
-
-    if (isNigeria) {
-      // Local format: e.g. "08031234567"
-      const localNumber = generateNigerianPhoneNumber();
-      // WhatsApp API requires international format: "234" + local without leading 0
-      const intlNumber = `234${localNumber.startsWith('0') ? localNumber.slice(1) : localNumber}`;
-      return {
-        phoneCode: '234',
-        localNumber,
-        fullDigits: intlNumber
-      };
-    }
-
-    if (isSouthAfrica) {
-      // Local format: e.g. "0712345678"
-      const localNumber = generateSouthAfricanPhoneNumber();
-      // WhatsApp API requires international format: "27" + local without leading 0
-      const intlNumber = `27${localNumber.startsWith('0') ? localNumber.slice(1) : localNumber}`;
-      return {
-        phoneCode: '27',
-        localNumber,
-        fullDigits: intlNumber
-      };
-    }
-
+  // Generates a unique randomized phone number that has not been seen for at least 30 days
+  const [phoneNumber] = useState(() => {
+    const seenSet = getSeenNumbersSet();
     const cleanPhoneCode = countryData?.phoneCode?.replace(/\D/g, '') || '1';
-    const areaCode = (100 + Math.floor(Math.random() * 899)).toString();
-    const midSegment = (100 + Math.floor(Math.random() * 899)).toString();
-    const lastFour = (1000 + Math.floor(Math.random() * 8999)).toString();
-    
-    return {
-      phoneCode: cleanPhoneCode,
-      localNumber: `${areaCode}${midSegment}${lastFour}`,
-      fullDigits: `${cleanPhoneCode}${areaCode}${midSegment}${lastFour}`
-    };
-  }, [country, countryData]);
+    const isNigeria = country === 'NG' || countryData?.code === 'NG' || cleanPhoneCode === '234';
+    const isSouthAfrica = country === 'ZA' || countryData?.code === 'ZA' || cleanPhoneCode === '27';
+    const isGhana = country === 'GH' || countryData?.code === 'GH' || cleanPhoneCode === '233';
 
-  const handleStartChat = () => {
+    let result = { phoneCode: '', localNumber: '', fullDigits: '' };
+    let attempts = 0;
+
+    while (attempts < 50) {
+      attempts++;
+      if (isNigeria) {
+        const localNumber = generateNigerianPhoneNumber();
+        const intlNumber = `234${localNumber.startsWith('0') ? localNumber.slice(1) : localNumber}`;
+        result = { phoneCode: '234', localNumber, fullDigits: intlNumber };
+      } else if (isSouthAfrica) {
+        const localNumber = generateSouthAfricanPhoneNumber();
+        const intlNumber = `27${localNumber.startsWith('0') ? localNumber.slice(1) : localNumber}`;
+        result = { phoneCode: '27', localNumber, fullDigits: intlNumber };
+      } else if (isGhana) {
+        const localNumber = generateGhanaianPhoneNumber();
+        const intlNumber = `233${localNumber.startsWith('0') ? localNumber.slice(1) : localNumber}`;
+        result = { phoneCode: '233', localNumber, fullDigits: intlNumber };
+      } else {
+        const areaCode = (100 + Math.floor(Math.random() * 899)).toString();
+        const midSegment = (100 + Math.floor(Math.random() * 899)).toString();
+        const lastFour = (1000 + Math.floor(Math.random() * 8999)).toString();
+        const localNumber = `${areaCode}${midSegment}${lastFour}`;
+        result = {
+          phoneCode: cleanPhoneCode,
+          localNumber,
+          fullDigits: `${cleanPhoneCode}${localNumber}`
+        };
+      }
+
+      if (!seenSet.has(result.fullDigits)) {
+        break;
+      }
+    }
+
+    // Save this number to the 30-day seen cache so it won't be repeated
+    saveSeenNumber(result.fullDigits);
+    return result;
+  });
+
+  const [isDelaying, setIsDelaying] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+
+  const triggerChatNavigation = () => {
     const usedToday = getDailyChatsUsed();
 
-    if (usedToday < 2) {
-      // 1st or 2nd chat of the day -> direct to WhatsApp with random number
+    if (usedToday < FREE_DAILY_GENERATIONS) {
+      // 1st through 5th chat of the day -> direct to WhatsApp with random number
       incrementDailyChats();
-      setDailyChatsUsed(prev => prev + 1);
 
       const greeting = encodeURIComponent(
-        lang === 'es' ? `¡Hola ${randomName}! Vi tu perfil en QuickChat 👋` :
-        lang === 'pt' ? `Olá ${randomName}! Vi seu perfil no QuickChat 👋` :
-        lang === 'fr' ? `Salut ${randomName} ! J'ai vu ton profil sur QuickChat 👋` :
-        lang === 'de' ? `Hallo ${randomName}! Ich habe dein Profil auf QuickChat gesehen 👋` :
-        lang === 'it' ? `Ciao ${randomName}! Ho visto il tuo profilo su QuickChat 👋` :
-        `Hey ${randomName}! Saw your profile on QuickChat 👋`
+        lang === 'es' ? `Hola amigo(a), estoy buscando amigos. Conseguí tu número en ${MESSAGE_INVITE_LINK}` :
+        lang === 'pt' ? `Olá amigo(a), estou procurando amigos. Peguei seu número em ${MESSAGE_INVITE_LINK}` :
+        lang === 'fr' ? `Salut, je cherche des amis. J'ai eu ton numéro sur ${MESSAGE_INVITE_LINK}` :
+        lang === 'de' ? `Hallo, ich suche nach Freunden. Ich habe deine Nummer von ${MESSAGE_INVITE_LINK} bekommen` :
+        lang === 'it' ? `Ciao, sto cercando amici. Ho preso il tuo numero da ${MESSAGE_INVITE_LINK}` :
+        `Hi Friend, am looking for some friends. I got your number from ${MESSAGE_INVITE_LINK}`
       );
 
       const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber.fullDigits}&text=${greeting}`;
       window.open(whatsappUrl, '_blank');
     } else {
-      // 3rd generation and beyond -> Adsterra smart link
+      // 6th generation and beyond -> Adsterra smart link
       incrementDailyChats();
-      setDailyChatsUsed(prev => prev + 1);
       window.open(SMART_LINK, '_blank');
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-3xl shadow-xl shadow-zinc-900/5 p-6 md:p-8 animate-pulse w-full border border-zinc-200/80">
-        <div className="flex justify-between items-center mb-6">
-          <div className="h-4 bg-zinc-200 rounded w-24"></div>
-          <div className="h-4 bg-zinc-200 rounded w-16"></div>
-        </div>
-        <div className="h-48 bg-zinc-100 rounded-2xl mb-4"></div>
-        <div className="h-14 bg-zinc-200 rounded-xl"></div>
-      </div>
-    );
-  }
+  const handleStartChat = () => {
+    if (isDelaying) return;
+    setIsDelaying(true);
+    setCountdown(3);
+  };
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (isDelaying && countdown > 0) {
+      timer = setTimeout(() => {
+        setCountdown(prev => prev - 1);
+      }, 1000);
+    } else if (isDelaying && countdown === 0) {
+      triggerChatNavigation();
+      setIsDelaying(false);
+      setCountdown(3);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isDelaying, countdown]);
+
+  useEffect(() => {
+    // Subtle, elegant celebratory confetti burst on reaching the result screen
+    try {
+      confetti({
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#25D366', '#128C7E', '#10B981', '#34D399', '#FBBF24'],
+        ticks: 180,
+        gravity: 1.1,
+        scalar: 0.85,
+        disableForReducedMotion: true
+      });
+    } catch {
+      // Fallback silently if canvas is unavailable
+    }
+  }, []);
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl shadow-zinc-900/5 overflow-hidden animate-bounceIn w-full border border-zinc-200/80 relative">
-      {/* Toast Notification with Blurred Avatar */}
-      <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm bg-white rounded-2xl shadow-xl border border-zinc-200/80 p-3.5 flex items-center space-x-3 transition-all duration-500 ${showNotification ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0 pointer-events-none'}`}>
-        <div className="relative w-11 h-11 rounded-full overflow-hidden shrink-0 ring-1 ring-zinc-200">
-          <img src={randomAvatar} className="w-full h-full object-cover filter blur-[4px] scale-110" alt="Avatar" />
-          <div className="absolute -bottom-0.5 -right-0.5 bg-emerald-500 w-3 h-3 rounded-full border-2 border-white"></div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-900 truncate">{randomName}</span>
-            <span className="text-[10px] text-zinc-400 shrink-0 ml-1">{t.result?.justNow || 'Just now'}</span>
-          </div>
-          <p className="text-xs text-zinc-600 line-clamp-1">{t.result?.toastIncoming || "Hey! I'm waiting for you in chat... 😉"}</p>
-        </div>
-        <div className="bg-emerald-50 w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-          <i className="fa-brands fa-whatsapp text-emerald-600 text-sm"></i>
-        </div>
-      </div>
-
-      {/* Minimal Top Header Bar */}
-      <div className="px-5 py-3.5 md:px-6 md:py-4 border-b border-zinc-100 flex items-center justify-between text-xs">
-        <div className="flex items-center space-x-2">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <span className="font-semibold text-zinc-900 tracking-tight">
-            {randomName}
-          </span>
-          <span className="text-zinc-300">·</span>
-          <span className="text-zinc-500 font-medium">
-            {countryData?.flag} {displayCity}
-          </span>
-        </div>
-
-        <div className="flex items-center space-x-1.5 text-zinc-500 font-mono text-[11px]">
-          <i className="fa-regular fa-clock text-zinc-400"></i>
-          <span>{formatTime(timeLeft)}</span>
-        </div>
-      </div>
-
-      <div className="p-5 md:p-6">
-        {/* Minimalist Teaser WhatsApp Chat Preview */}
-        <TeaserChatPreview
-          name={randomName}
-          avatar={randomAvatar}
-          city={displayCity}
-          preference={preference}
-          onUnlock={handleStartChat}
-          lang={lang}
-          isUnlocked={true}
-        />
-
-        {/* Primary CTA Button */}
-        <div>
-          <button
-            onClick={handleStartChat}
-            className="w-full text-white font-bold py-3.5 px-4 rounded-xl shadow-xs transition-all flex items-center justify-center space-x-2 text-sm md:text-base whatsapp-green hover:brightness-105 active:scale-[0.99]"
+    <div className="bg-white rounded-3xl shadow-xl shadow-zinc-900/5 p-6 md:p-8 w-full border border-zinc-200/80 animate-bounceIn flex flex-col items-center justify-center">
+      {/* Subtle Animated Success Checkmark */}
+      <div className="mb-5 flex items-center justify-center">
+        <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-200/70 shadow-xs animate-checkmark-scale">
+          <svg 
+            className="w-7 h-7 text-emerald-600 animate-checkmark-draw" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="3" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
           >
-            <i className="fa-brands fa-whatsapp text-lg"></i>
-            <span>{t.result?.startChatting || 'Start Chatting on WhatsApp'}</span>
-          </button>
-          
-          {/* Subtle Security Footnote */}
-          <p className="text-[11px] text-zinc-400 text-center font-normal flex items-center justify-center space-x-1.5 mt-3">
-            <i className="fa-solid fa-lock text-[10px] text-zinc-400"></i>
-            <span>End-to-end encrypted · 100% private</span>
-          </p>
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
         </div>
       </div>
+
+      <button
+        onClick={handleStartChat}
+        disabled={isDelaying}
+        className={`w-full text-white font-bold py-4 px-6 rounded-xl shadow-md transition-all flex items-center justify-center space-x-3 text-base md:text-lg cursor-pointer ${
+          isDelaying 
+            ? 'bg-emerald-600 cursor-wait' 
+            : 'whatsapp-green hover:brightness-105 active:scale-[0.99]'
+        }`}
+      >
+        {isDelaying ? (
+          <>
+            <i className="fa-solid fa-circle-notch fa-spin text-xl"></i>
+            <span>Connecting to Chat... ({countdown}s)</span>
+          </>
+        ) : (
+          <>
+            <i className="fa-brands fa-whatsapp text-2xl"></i>
+            <span>Start Chat</span>
+          </>
+        )}
+      </button>
+
+      {/* Sponsored Banner Ad */}
+      <BannerAd />
+
+      {onRegenerate && (
+        <button
+          onClick={onRegenerate}
+          disabled={isDelaying}
+          className="w-full bg-zinc-50 hover:bg-zinc-100 text-zinc-700 font-semibold py-3 px-4 rounded-xl border border-zinc-200 transition-all flex items-center justify-center space-x-2 text-sm md:text-base active:scale-[0.99] cursor-pointer group disabled:opacity-50"
+        >
+          <i className="fa-solid fa-arrows-rotate text-zinc-400 group-hover:rotate-180 transition-transform duration-300"></i>
+          <span>Regenerate</span>
+        </button>
+      )}
     </div>
   );
 };

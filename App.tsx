@@ -24,7 +24,6 @@ const App: React.FC = () => {
     }
     return COUNTRIES[0]?.code || 'ZA';
   });
-  const [selectedPreference, setSelectedPreference] = useState('text');
   const [detectedCity, setDetectedCity] = useState<string | undefined>(() => {
     if (typeof window !== 'undefined') {
       return sessionStorage.getItem('quickchat_exact_city') || undefined;
@@ -34,9 +33,8 @@ const App: React.FC = () => {
   const [lang, setLang] = useState<SupportedLanguage>(() => detectLanguage());
   const [userSelectedLangManually, setUserSelectedLangManually] = useState(false);
 
-  const handleStartSearch = (country: string, preference: string, city?: string) => {
+  const handleStartSearch = (country: string, _preference: string, city?: string) => {
     setSelectedCountry(country);
-    setSelectedPreference(preference);
     if (city) {
       setDetectedCity(city);
       if (typeof window !== 'undefined') {
@@ -52,6 +50,10 @@ const App: React.FC = () => {
 
   const handleScanComplete = () => {
     setStep('result');
+  };
+
+  const handleRegenerate = () => {
+    setStep('scanning');
   };
 
   const handleLanguageChange = (newLang: SupportedLanguage) => {
@@ -98,9 +100,8 @@ const App: React.FC = () => {
           {step === 'result' && (
             <ResultView 
               country={selectedCountry} 
-              preference={selectedPreference}
-              detectedCity={detectedCity}
               lang={lang}
+              onRegenerate={handleRegenerate}
             />
           )}
         </div>
