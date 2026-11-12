@@ -6,9 +6,10 @@ import {
   MESSAGE_INVITE_LINK, 
   FREE_DAILY_GENERATIONS, 
   COUNTRIES, 
-  generateNigerianPhoneNumber, 
-  generateSouthAfricanPhoneNumber, 
-  generateGhanaianPhoneNumber 
+  generateNigerianPhoneNumber,
+  generateSouthAfricanPhoneNumber,
+  generateGhanaianPhoneNumber,
+  generateKenyanPhoneNumber
 } from '../constants';
 import { SupportedLanguage } from '../translations';
 
@@ -105,6 +106,7 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
     const isNigeria = country === 'NG' || countryData?.code === 'NG' || cleanPhoneCode === '234';
     const isSouthAfrica = country === 'ZA' || countryData?.code === 'ZA' || cleanPhoneCode === '27';
     const isGhana = country === 'GH' || countryData?.code === 'GH' || cleanPhoneCode === '233';
+    const isKenya = country === 'KE' || countryData?.code === 'KE' || cleanPhoneCode === '254';
 
     let result = { phoneCode: '', localNumber: '', fullDigits: '' };
     let attempts = 0;
@@ -123,6 +125,10 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
         const localNumber = generateGhanaianPhoneNumber();
         const intlNumber = `233${localNumber.startsWith('0') ? localNumber.slice(1) : localNumber}`;
         result = { phoneCode: '233', localNumber, fullDigits: intlNumber };
+      } else if (isKenya) {
+        const localNumber = generateKenyanPhoneNumber();
+        const intlNumber = `254${localNumber.startsWith('0') ? localNumber.slice(1) : localNumber}`;
+        result = { phoneCode: '254', localNumber, fullDigits: intlNumber };
       } else {
         const areaCode = (100 + Math.floor(Math.random() * 899)).toString();
         const midSegment = (100 + Math.floor(Math.random() * 899)).toString();
