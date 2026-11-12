@@ -10,6 +10,8 @@ import {
   generateKenyanPhoneNumber
 } from '../constants';
 import { SupportedLanguage } from '../translations';
+import { AdManager, ADS, canShowAd, recordAdImpression } from '../ads';
+import type { DirectLinkAd } from '../ads/types';
 
 interface ResultViewProps {
   country: string;
@@ -159,6 +161,19 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
       // 1st through 5th chat of the day -> direct to WhatsApp with random number
       incrementDailyChats();
 
+      // Open any enabled result-page direct-link ad first (interstitial)
+      const directLinkAd = ADS.find(
+        (a): a is DirectLinkAd =>
+          a.enabled &&
+          a.type === 'direct-link' &&
+          a.placement === 'result' &&
+          canShowAd(a.id, a.maxPerDay),
+      );
+      if (directLinkAd) {
+        recordAdImpression(directLinkAd.id);
+        window.open(directLinkAd.url, '_blank', 'noopener,noreferrer');
+      }
+
       const greeting = encodeURIComponent(
         lang === 'es' ? `Hola amigo(a), estoy buscando amigos. Conseguí tu número en ${MESSAGE_INVITE_LINK}` :
         lang === 'pt' ? `Olá amigo(a), estou procurando amigos. Peguei seu número em ${MESSAGE_INVITE_LINK}` :
@@ -253,6 +268,9 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
           </>
         )}
       </button>
+
+      {/* Result-page banner ads (enabled via ads/config.ts) */}
+      <AdManager placement="result" />
 
       {onRegenerate && (
         <button

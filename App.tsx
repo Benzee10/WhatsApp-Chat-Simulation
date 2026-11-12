@@ -10,6 +10,7 @@ import RecentActivity from './components/RecentActivity';
 import GroupNotification from './components/GroupNotification';
 import { COUNTRIES } from './constants';
 import { SupportedLanguage, detectLanguage } from './translations';
+import { AdManager } from './ads';
 
 type AppStep = 'landing' | 'quiz' | 'scanning' | 'result';
 
@@ -112,6 +113,9 @@ const App: React.FC = () => {
       
       {/* New Group Notification */}
       <GroupNotification lang={lang} />
+
+      {/* Global ads: pop-unders, social bars (enabled via ads/config.ts) */}
+      <AdManager placement="global" />
 
       {/* Sticky Telegram Button - Right Side and Raised above the group notification */}
       <a 
