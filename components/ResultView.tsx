@@ -1,11 +1,9 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
-import BannerAd from './BannerAd';
-import { 
-  SMART_LINK, 
-  MESSAGE_INVITE_LINK, 
-  FREE_DAILY_GENERATIONS, 
-  COUNTRIES, 
+import {
+  MESSAGE_INVITE_LINK,
+  FREE_DAILY_GENERATIONS,
+  COUNTRIES,
   generateNigerianPhoneNumber,
   generateSouthAfricanPhoneNumber,
   generateGhanaianPhoneNumber,
@@ -172,10 +170,6 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
 
       const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber.fullDigits}&text=${greeting}`;
       window.open(whatsappUrl, '_blank');
-    } else {
-      // 6th generation and beyond -> Adsterra smart link
-      incrementDailyChats();
-      window.open(SMART_LINK, '_blank');
     }
   };
 
@@ -259,9 +253,6 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
           </>
         )}
       </button>
-
-      {/* Sponsored Banner Ad */}
-      <BannerAd />
 
       {onRegenerate && (
         <button
