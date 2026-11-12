@@ -1,7 +1,6 @@
 /**
  * QuickChat Configuration and Data Constants
  */
-export const SMART_LINK = "https://lovelydates.short.gy/rdgHt1";
 export const MESSAGE_INVITE_LINK = "https://lovelydates.short.gy/rdgHt1";
 export const FREE_DAILY_GENERATIONS = 20;
 
