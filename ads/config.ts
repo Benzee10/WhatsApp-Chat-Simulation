@@ -39,7 +39,7 @@ export const ADS: AdConfig[] = [
     label: 'Adsterra Direct Link (Result page)',
     url: 'https://asiaso.org/4/1c8af0f5bd2a283164bf176336a3b907',
     openOnLoad: false,
-    maxPerDay: 1,
+    maxPerDay: 0,
   },
 
   // -------------------------------------------------------------------------
@@ -72,7 +72,7 @@ export const ADS: AdConfig[] = [
     url: 'https://ahuramazda.org/1/c93339dfa05cdfa73758c892ebcd226e',
     script: `<script data-cfasync="false" src="https://ahuramazda.org/1/c93339dfa05cdfa73758c892ebcd226e"></script>`,
     delay: 1500,
-    maxPerDay: 2,
+    maxPerDay: 0,
   },
 
   // -------------------------------------------------------------------------
