@@ -2,13 +2,19 @@
  * SocialBarAd — Renders a sticky social-bar ad at the top or bottom.
  *
  * Two modes:
- * 1) `script` provided: injects the network's social-bar script.
+ * 1) `script` provided: extracts the external script `src` and loads it properly.
  * 2) No script: renders a simple sticky placeholder bar you can style.
  *
  * Config fields used: position, script
  */
 import React, { useEffect, useRef } from 'react';
 import { SocialBarAd as SocialBarAdConfig } from '../types';
+
+/** Extract a src URL from a <script src="..."> tag string */
+const extractScriptSrc = (script: string): string | null => {
+  const match = script.match(/src\s*=\s*["']([^"']+)["']/i);
+  return match ? match[1] : null;
+};
 
 interface SocialBarAdProps {
   ad: SocialBarAdConfig;
@@ -19,13 +25,19 @@ const SocialBarAd: React.FC<SocialBarAdProps> = ({ ad }) => {
 
   useEffect(() => {
     if (injectedRef.current) return;
-    if (!ad.script || !ad.script.trim()) return;
+
+    const src = ad.script ? extractScriptSrc(ad.script) : null;
+    if (!src) return;
 
     injectedRef.current = true;
     try {
       const scriptEl = document.createElement('script');
-      scriptEl.textContent = ad.script;
+      scriptEl.src = src;
       scriptEl.async = true;
+      scriptEl.crossOrigin = 'anonymous';
+      scriptEl.onerror = () => {
+        // Script failed to load — silently ignore
+      };
       document.head.appendChild(scriptEl);
     } catch {
       // ignore injection errors
@@ -33,7 +45,7 @@ const SocialBarAd: React.FC<SocialBarAdProps> = ({ ad }) => {
   }, [ad.script]);
 
   // Fallback placeholder bar when no script is provided
-  if (!ad.script || !ad.script.trim()) {
+  if (!ad.script || !extractScriptSrc(ad.script)) {
     return (
       <div
         className={`fixed left-0 right-0 ${
