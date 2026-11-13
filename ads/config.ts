@@ -39,7 +39,7 @@ export const ADS: AdConfig[] = [
     placement: 'result',
     enabled: false,
     label: 'Adsterra Direct Link (Result page)',
-    url: 'https://your-adsterra-direct-link.com',
+    url: 'https://html-starter-6nu.pages.dev',
     openOnLoad: false,
     maxPerDay: 1,
   },
