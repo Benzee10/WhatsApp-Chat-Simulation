@@ -28,10 +28,8 @@ import {
 
 export const ADS: AdConfig[] = [
   // -------------------------------------------------------------------------
-  // DIRECT LINK — Adsterra (example)
+  // DIRECT LINK — Adsterra
   // -------------------------------------------------------------------------
-  // Paste your Adsterra direct-link URL in `url`.
-  // Set openOnLoad: true to open immediately when the page loads.
   {
     id: 'direct-link-adsterra',
     network: 'adsterra',
@@ -39,7 +37,7 @@ export const ADS: AdConfig[] = [
     placement: 'result',
     enabled: false,
     label: 'Adsterra Direct Link (Result page)',
-    url: 'https://html-starter-6nu.pages.dev',
+    url: 'https://asiaso.org/4/1c8af0f5bd2a283164bf176336a3b907',
     openOnLoad: false,
     maxPerDay: 1,
   },
@@ -71,12 +69,8 @@ export const ADS: AdConfig[] = [
     placement: 'global',
     enabled: false,
     label: 'Adsterra Pop Under',
-    url: 'https://your-adsterra-popunder.com',
-    script: `
-      // Paste Adsterra pop-under script here
-      // Example:
-      // (function() { ... })();
-    `,
+    url: 'https://ahuramazda.org/1/c93339dfa05cdfa73758c892ebcd226e',
+    script: `<script data-cfasync="false" src="https://ahuramazda.org/1/c93339dfa05cdfa73758c892ebcd226e"></script>`,
     delay: 1500,
     maxPerDay: 2,
   },
@@ -164,9 +158,7 @@ export const ADS: AdConfig[] = [
     enabled: false,
     label: 'Adsterra Social Bar',
     position: 'bottom',
-    script: `
-      // Paste Adsterra social bar script here
-    `,
+    script: `<script data-cfasync="false" src="https://brijmohan.org/14/018dca526ec4db64d7e07f5ca21a4a25"></script>`,
     maxPerDay: 0,
   },
 
