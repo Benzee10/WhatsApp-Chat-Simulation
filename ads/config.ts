@@ -50,11 +50,11 @@ export const ADS: AdConfig[] = [
     network: 'monetag',
     type: 'direct-link',
     placement: 'landing',
-    enabled: false,
+    enabled: true,
     label: 'Monetag Direct Link (Landing page)',
-    url: 'https://your-monetag-direct-link.com',
+    url: 'https://uplcm.com/4/6249113',
     openOnLoad: false,
-    maxPerDay: 1,
+    maxPerDay: 0,
   },
 
   // -------------------------------------------------------------------------
