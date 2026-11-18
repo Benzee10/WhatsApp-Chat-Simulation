@@ -17,6 +17,8 @@ interface ResultViewProps {
   country: string;
   lang?: SupportedLanguage;
   onRegenerate?: () => void;
+  isActivated?: boolean;
+  onTokenActivated?: () => void;
 }
 
 const DAILY_CHAT_KEY = 'quickchat_daily_chat_usage';
@@ -53,7 +55,6 @@ const saveSeenNumber = (num: string) => {
     const raw = localStorage.getItem(SEEN_NUMBERS_KEY);
     const records: SeenNumberEntry[] = raw ? JSON.parse(raw) : [];
     const now = Date.now();
-    // Retain only entries within the last 30 days, avoiding duplicate entries
     const updated = records.filter(r => now - r.ts < THIRTY_DAYS_MS && r.num !== num);
     updated.push({ num, ts: now });
     localStorage.setItem(SEEN_NUMBERS_KEY, JSON.stringify(updated));
@@ -77,7 +78,7 @@ const getDailyChatsUsed = (): number => {
     if (data.date === today) {
       return data.count || 0;
     }
-    return 0; // New day
+    return 0;
   } catch {
     return 0;
   }
@@ -96,10 +97,9 @@ const incrementDailyChats = (): number => {
   }
 };
 
-const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegenerate }) => {
+const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegenerate, isActivated = false, onTokenActivated }) => {
   const countryData = useMemo(() => COUNTRIES.find(c => c.code === country), [country]);
 
-  // Generates a unique randomized phone number that has not been seen for at least 30 days
   const [phoneNumber] = useState(() => {
     const seenSet = getSeenNumbersSet();
     const cleanPhoneCode = countryData?.phoneCode?.replace(/\D/g, '') || '1';
@@ -146,7 +146,6 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
       }
     }
 
-    // Save this number to the 30-day seen cache so it won't be repeated
     saveSeenNumber(result.fullDigits);
     return result;
   });
@@ -158,10 +157,8 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
     const usedToday = getDailyChatsUsed();
 
     if (usedToday < FREE_DAILY_GENERATIONS) {
-      // 1st through 5th chat of the day -> direct to WhatsApp with random number
       incrementDailyChats();
 
-      // Open any enabled result-page direct-link ad first (interstitial)
       const directLinkAd = ADS.find(
         (a): a is DirectLinkAd =>
           a.enabled &&
@@ -190,6 +187,9 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
 
   const handleStartChat = () => {
     if (isDelaying) return;
+    if (!isActivated) {
+      return;
+    }
     setIsDelaying(true);
     setCountdown(3);
   };
@@ -211,7 +211,6 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
   }, [isDelaying, countdown]);
 
   useEffect(() => {
-    // Subtle, elegant celebratory confetti burst on reaching the result screen
     try {
       confetti({
         particleCount: 50,
@@ -230,7 +229,6 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
 
   return (
     <div className="bg-white rounded-3xl shadow-xl shadow-zinc-900/5 p-6 md:p-8 w-full border border-zinc-200/80 animate-bounceIn flex flex-col items-center justify-center">
-      {/* Subtle Animated Success Checkmark */}
       <div className="mb-5 flex items-center justify-center">
         <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-200/70 shadow-xs animate-checkmark-scale">
           <svg 
@@ -249,11 +247,13 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
 
       <button
         onClick={handleStartChat}
-        disabled={isDelaying}
+        disabled={isDelaying || !isActivated}
         className={`w-full text-white font-bold py-4 px-6 rounded-xl shadow-md transition-all flex items-center justify-center space-x-3 text-base md:text-lg cursor-pointer ${
-          isDelaying 
-            ? 'bg-emerald-600 cursor-wait' 
-            : 'whatsapp-green hover:brightness-105 active:scale-[0.99]'
+          !isActivated
+            ? 'bg-zinc-400 cursor-not-allowed'
+            : isDelaying
+              ? 'bg-emerald-600 cursor-wait'
+              : 'whatsapp-green hover:brightness-105 active:scale-[0.99]'
         }`}
       >
         {isDelaying ? (
@@ -269,13 +269,20 @@ const ResultView: React.FC<ResultViewProps> = ({ country, lang = 'en', onRegener
         )}
       </button>
 
-      {/* Result-page banner ads (enabled via ads/config.ts) */}
+      {!isActivated && (
+        <div className="mt-4">
+          <p className="text-xs text-zinc-500 text-center">
+            Activation required. Please enter your token to start chatting.
+          </p>
+        </div>
+      )}
+
       <AdManager placement="result" />
 
       {onRegenerate && (
         <button
           onClick={onRegenerate}
-          disabled={isDelaying}
+          disabled={isDelaying || !isActivated}
           className="w-full bg-zinc-50 hover:bg-zinc-100 text-zinc-700 font-semibold py-3 px-4 rounded-xl border border-zinc-200 transition-all flex items-center justify-center space-x-2 text-sm md:text-base active:scale-[0.99] cursor-pointer group disabled:opacity-50"
         >
           <i className="fa-solid fa-arrows-rotate text-zinc-400 group-hover:rotate-180 transition-transform duration-300"></i>
