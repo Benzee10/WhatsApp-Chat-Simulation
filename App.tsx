@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LandingView from './components/LandingView';
@@ -8,7 +7,9 @@ import ScanningView from './components/ScanningView';
 import ResultView from './components/ResultView';
 import RecentActivity from './components/RecentActivity';
 import GroupNotification from './components/GroupNotification';
-import { COUNTRIES } from './constants';
+import AdminPanel from './components/AdminPanel';
+import TokenModal from './components/TokenModal';
+import { COUNTRIES, ADMIN_CONFIG } from './constants';
 import { SupportedLanguage, detectLanguage } from './translations';
 import { AdManager } from './ads';
 
@@ -33,6 +34,18 @@ const App: React.FC = () => {
   });
   const [lang, setLang] = useState<SupportedLanguage>(() => detectLanguage());
   const [userSelectedLangManually, setUserSelectedLangManually] = useState(false);
+  const [isActivated, setIsActivated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check for admin access key in URL on load
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const adminKey = urlParams.get('admin');
+    if (adminKey && adminKey === ADMIN_CONFIG.accessKey) {
+      setIsAdmin(true);
+    }
+  }, []);
 
   const handleStartSearch = (country: string, _preference: string, city?: string) => {
     setSelectedCountry(country);
@@ -55,6 +68,11 @@ const App: React.FC = () => {
 
   const handleRegenerate = () => {
     setStep('scanning');
+    setIsActivated(false);
+  };
+
+  const handleTokenActivated = () => {
+    setIsActivated(true);
   };
 
   const handleLanguageChange = (newLang: SupportedLanguage) => {
@@ -65,6 +83,11 @@ const App: React.FC = () => {
   const countryData = COUNTRIES.find(c => c.code === selectedCountry) || COUNTRIES[0];
   const activeCity = detectedCity || countryData?.city || 'Johannesburg';
 
+  // If admin mode, show only the admin panel
+  if (isAdmin) {
+    return <AdminPanel />;
+  }
+
   return (
     <div className="flex flex-col min-h-screen relative overflow-x-hidden">
       <Header 
@@ -72,7 +95,7 @@ const App: React.FC = () => {
         lang={lang} 
         onSelectLang={handleLanguageChange} 
       />
-      
+
       <main className="flex-grow flex items-center justify-center p-4 md:p-6">
         <div className="w-full max-w-md mx-auto">
           {step === 'landing' && (
@@ -93,24 +116,33 @@ const App: React.FC = () => {
           {step === 'quiz' && (
             <QuizView onComplete={handleQuizComplete} lang={lang} />
           )}
-          
+
           {step === 'scanning' && (
             <ScanningView onComplete={handleScanComplete} city={detectedCity} lang={lang} />
           )}
-          
+
           {step === 'result' && (
             <ResultView 
               country={selectedCountry} 
               lang={lang}
               onRegenerate={handleRegenerate}
+              isActivated={isActivated}
+              onTokenActivated={handleTokenActivated}
             />
           )}
         </div>
       </main>
 
+      {/* Token activation modal (shown before start chat) */}
+      <TokenModal
+        isOpen={step === 'result' && !isActivated}
+        onSuccess={handleTokenActivated}
+        onClose={() => {}}
+      />
+
       {/* Social Proof Toasts */}
       <RecentActivity />
-      
+
       {/* New Group Notification */}
       <GroupNotification lang={lang} />
 

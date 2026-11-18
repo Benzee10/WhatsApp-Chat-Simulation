@@ -22,6 +22,25 @@ export const RECENT_ACTIVITY_NAMES = [
 ];
 
 /**
+ * Admin Configuration
+ * ============================================================================
+ * ADMIN PANEL ACCESS:
+ *   Add ?admin=<ACCESS_KEY> to the URL to access the hidden admin panel.
+ *   Example: https://your-site.com/?admin=quickchat-admin-2024
+ * ============================================================================
+ */
+export const ADMIN_CONFIG = {
+  // Change this to secure your admin panel. Only those with this key in the URL can access it.
+  accessKey: 'quickchat-admin-2024',
+
+  // WhatsApp link users click to contact admin for an activation token
+  adminWhatsAppLink: 'https://wa.me/message/55MRTO2IBU5YA1',
+
+  // Storage keys
+  TOKENS_KEY: 'quickchat_activation_tokens',
+};
+
+/**
  * Nigerian Mobile Network Prefixes (MTN, Airtel, Glo, 9mobile)
  */
 export const NIGERIAN_PHONE_PREFIXES = [
