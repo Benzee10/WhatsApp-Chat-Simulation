@@ -15,6 +15,8 @@ import { AdManager } from './ads';
 
 type AppStep = 'landing' | 'quiz' | 'scanning' | 'result';
 
+const DEVICE_ACTIVATED_KEY = 'quickchat_device_activated';
+
 const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>('landing');
   const [selectedCountry, setSelectedCountry] = useState(() => {
@@ -47,6 +49,22 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Check if this device already has lifetime activation
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(DEVICE_ACTIVATED_KEY);
+      if (raw) {
+        const activation = JSON.parse(raw);
+        if (activation && activation.deviceId) {
+          setIsActivated(true);
+        }
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }, []);
+
   const handleStartSearch = (country: string, _preference: string, city?: string) => {
     setSelectedCountry(country);
     if (city) {
@@ -68,7 +86,7 @@ const App: React.FC = () => {
 
   const handleRegenerate = () => {
     setStep('scanning');
-    setIsActivated(false);
+    // Keep activation state - lifetime access on this device
   };
 
   const handleTokenActivated = () => {
