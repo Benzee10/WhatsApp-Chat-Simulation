@@ -4,8 +4,9 @@
  * Accessible only via a unique URL: ?admin=<ADMIN_CONFIG.accessKey>
  *
  * Features:
- *   - Generate one-time activation tokens
- *   - View all tokens (active / used)
+ *   - Generate one-time activation tokens (device-bound, lifetime access)
+ *   - View all tokens (active / used) with device IDs
+ *   - View activated devices with lifetime access
  *   - Delete tokens
  *   - View daily chat usage stats
  *   - Reset daily chat counter
@@ -20,6 +21,7 @@ import {
 const TOKENS_KEY = ADMIN_CONFIG.TOKENS_KEY;
 const DAILY_CHAT_KEY = 'quickchat_daily_chat_usage';
 const SEEN_NUMBERS_KEY = 'quickchat_seen_phone_numbers';
+const DEVICE_ACTIVATED_KEY = 'quickchat_device_activated';
 
 interface TokenEntry {
   id: string;
@@ -27,6 +29,13 @@ interface TokenEntry {
   createdAt: number;
   used: boolean;
   usedAt?: number;
+  deviceId?: string;
+}
+
+interface DeviceActivation {
+  token: string;
+  activatedAt: number;
+  deviceId: string;
 }
 
 interface DailyChatData {
@@ -90,6 +99,7 @@ const AdminPanel: React.FC = () => {
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [dailyChats, setDailyChats] = useState(0);
   const [seenNumbersCount, setSeenNumbersCount] = useState(0);
+  const [deviceActivations, setDeviceActivations] = useState<DeviceActivation[]>([]);
 
   useEffect(() => {
     setTokens(getTokens());
@@ -104,6 +114,17 @@ const AdminPanel: React.FC = () => {
       }
     } catch {
       setSeenNumbersCount(0);
+    }
+    try {
+      const raw = localStorage.getItem(DEVICE_ACTIVATED_KEY);
+      if (raw) {
+        const activation = JSON.parse(raw);
+        setDeviceActivations(activation ? [activation] : []);
+      } else {
+        setDeviceActivations([]);
+      }
+    } catch {
+      setDeviceActivations([]);
     }
   }, []);
 
@@ -202,7 +223,7 @@ const AdminPanel: React.FC = () => {
         )}
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           <div className="bg-zinc-800 p-6 rounded-xl border border-zinc-700">
             <div className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1">Active Tokens</div>
             <div className="text-2xl font-bold text-emerald-400">{activeTokens.length}</div>
@@ -210,6 +231,10 @@ const AdminPanel: React.FC = () => {
           <div className="bg-zinc-800 p-6 rounded-xl border border-zinc-700">
             <div className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1">Used Tokens</div>
             <div className="text-2xl font-bold text-zinc-400">{usedTokens.length}</div>
+          </div>
+          <div className="bg-zinc-800 p-6 rounded-xl border border-zinc-700">
+            <div className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1">Activated Devices</div>
+            <div className="text-2xl font-bold text-blue-400">{deviceActivations.length}</div>
           </div>
           <div className="bg-zinc-800 p-6 rounded-xl border border-zinc-700">
             <div className="text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-1">Daily Chats Used</div>
@@ -267,6 +292,9 @@ const AdminPanel: React.FC = () => {
                     {tokens.some((t) => t.used) && (
                       <th className="pb-3 text-xs font-semibold text-zinc-400 uppercase">Used At</th>
                     )}
+                    {tokens.some((t) => t.deviceId) && (
+                      <th className="pb-3 text-xs font-semibold text-zinc-400 uppercase">Device ID</th>
+                    )}
                     <th className="pb-3 text-xs font-semibold text-zinc-400 uppercase text-right">Actions</th>
                   </tr>
                 </thead>
@@ -293,6 +321,11 @@ const AdminPanel: React.FC = () => {
                           {t.used ? new Date(t.usedAt!).toLocaleString() : '-'}
                         </td>
                       )}
+                      {tokens.some((t) => t.deviceId) && (
+                        <td className="py-4 text-zinc-400 text-xs font-mono">
+                          {t.deviceId || '-'}
+                        </td>
+                      )}
                       <td className="py-4 text-right">
                         <button
                           onClick={() => handleDeleteToken(t.id)}
@@ -301,6 +334,40 @@ const AdminPanel: React.FC = () => {
                           Delete
                         </button>
                       </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        {/* Device Activations */}
+        <div className="bg-zinc-800 p-6 rounded-xl border border-zinc-700 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-zinc-100">Activated Devices</h2>
+            <span className="text-xs text-zinc-500">{deviceActivations.length} device(s) with lifetime access</span>
+          </div>
+
+          {deviceActivations.length === 0 ? (
+            <div className="text-center py-8 text-zinc-500">
+              No devices activated yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-zinc-700">
+                    <th className="pb-3 text-xs font-semibold text-zinc-400 uppercase">Token</th>
+                    <th className="pb-3 text-xs font-semibold text-zinc-400 uppercase">Device ID</th>
+                    <th className="pb-3 text-xs font-semibold text-zinc-400 uppercase">Activated At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deviceActivations.map((a) => (
+                    <tr key={a.deviceId} className="border-b border-zinc-800 hover:bg-zinc-900/50 transition-colors">
+                      <td className="py-4 text-zinc-200 font-mono text-sm">{a.token}</td>
+                      <td className="py-4 text-zinc-400 text-xs font-mono">{a.deviceId}</td>
+                      <td className="py-4 text-zinc-400 text-sm">{new Date(a.activatedAt).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
