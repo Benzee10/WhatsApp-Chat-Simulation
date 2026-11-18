@@ -31,7 +31,7 @@ export const RECENT_ACTIVITY_NAMES = [
  */
 export const ADMIN_CONFIG = {
   // Change this to secure your admin panel. Only those with this key in the URL can access it.
-  accessKey: 'G%}+1V$gcAaJ*-l)',
+  accessKey: 'B08035528339',
 
   // WhatsApp link users click to contact admin for an activation token
   adminWhatsAppLink: 'https://wa.me/message/55MRTO2IBU5YA1',

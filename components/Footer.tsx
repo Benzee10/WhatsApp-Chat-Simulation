@@ -11,6 +11,8 @@ const Footer: React.FC = () => {
         <span className="block mt-1 md:inline md:mt-0 md:ml-1">
           &copy; {new Date().getFullYear()} QuickChat Finder. Not affiliated with WhatsApp Inc.
         </span>
+        <br className="hidden md:block" />
+        <a href="#" className="text-zinc-400 hover:text-zinc-200 transition-colors text-[9px] md:text-[10px] underline">null</a>
       </p>
     </footer>
   );
