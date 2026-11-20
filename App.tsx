@@ -16,6 +16,7 @@ import { AdManager } from './ads';
 type AppStep = 'landing' | 'quiz' | 'scanning' | 'result';
 
 const DEVICE_ACTIVATED_KEY = 'quickchat_device_activated';
+const TOKEN_REQUIRED_KEY = ADMIN_CONFIG.TOKEN_REQUIRED_KEY;
 
 const App: React.FC = () => {
   const [step, setStep] = useState<AppStep>('landing');
@@ -37,6 +38,7 @@ const App: React.FC = () => {
   const [lang, setLang] = useState<SupportedLanguage>(() => detectLanguage());
   const [userSelectedLangManually, setUserSelectedLangManually] = useState(false);
   const [isActivated, setIsActivated] = useState(false);
+  const [tokenRequired, setTokenRequired] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Check for admin access key in URL on load
@@ -62,6 +64,19 @@ const App: React.FC = () => {
       }
     } catch {
       // Ignore parse errors
+    }
+
+    // Load token required setting (default: true)
+    try {
+      const raw = localStorage.getItem(TOKEN_REQUIRED_KEY);
+      const required = raw === null ? true : JSON.parse(raw);
+      setTokenRequired(required);
+      // If token is not required, device is considered activated
+      if (!required) {
+        setIsActivated(true);
+      }
+    } catch {
+      setTokenRequired(true);
     }
   }, []);
 
@@ -152,11 +167,13 @@ const App: React.FC = () => {
       </main>
 
       {/* Token activation modal (shown before start chat) */}
-      <TokenModal
-        isOpen={step === 'result' && !isActivated}
-        onSuccess={handleTokenActivated}
-        onClose={() => {}}
-      />
+      {tokenRequired && (
+        <TokenModal
+          isOpen={step === 'result' && !isActivated}
+          onSuccess={handleTokenActivated}
+          onClose={() => {}}
+        />
+      )}
 
       {/* Social Proof Toasts */}
       <RecentActivity />
