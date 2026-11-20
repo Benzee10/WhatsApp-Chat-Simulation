@@ -22,6 +22,7 @@ const TOKENS_KEY = ADMIN_CONFIG.TOKENS_KEY;
 const DAILY_CHAT_KEY = 'quickchat_daily_chat_usage';
 const SEEN_NUMBERS_KEY = 'quickchat_seen_phone_numbers';
 const DEVICE_ACTIVATED_KEY = 'quickchat_device_activated';
+const TOKEN_REQUIRED_KEY = ADMIN_CONFIG.TOKEN_REQUIRED_KEY;
 
 interface TokenEntry {
   id: string;
@@ -100,6 +101,7 @@ const AdminPanel: React.FC = () => {
   const [dailyChats, setDailyChats] = useState(0);
   const [seenNumbersCount, setSeenNumbersCount] = useState(0);
   const [deviceActivations, setDeviceActivations] = useState<DeviceActivation[]>([]);
+  const [tokenRequired, setTokenRequired] = useState(true);
 
   useEffect(() => {
     setTokens(getTokens());
@@ -126,7 +128,29 @@ const AdminPanel: React.FC = () => {
     } catch {
       setDeviceActivations([]);
     }
+    // Load token required setting (default: true)
+    try {
+      const raw = localStorage.getItem(TOKEN_REQUIRED_KEY);
+      setTokenRequired(raw === null ? true : JSON.parse(raw));
+    } catch {
+      setTokenRequired(true);
+    }
   }, []);
+
+  const handleToggleTokenRequired = (enabled: boolean) => {
+    try {
+      localStorage.setItem(TOKEN_REQUIRED_KEY, JSON.stringify(enabled));
+      setTokenRequired(enabled);
+      setStatus({
+        type: 'success',
+        message: `Token requirement ${enabled ? 'enabled' : 'disabled'} successfully.`,
+      });
+      clearStatus();
+    } catch {
+      setStatus({ type: 'error', message: 'Failed to save token requirement setting.' });
+      clearStatus();
+    }
+  };
 
   const clearStatus = () => setTimeout(() => setStatus(null), 3000);
 
@@ -390,6 +414,39 @@ const AdminPanel: React.FC = () => {
           >
             🗑️ Clear Seen Numbers Cache
           </button>
+        </div>
+
+        {/* Token Requirement Toggle */}
+        <div className="bg-zinc-800 p-6 rounded-xl border border-zinc-700 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-400 mb-1 uppercase tracking-wider">
+                Token Requirement
+              </h3>
+              <p className="text-xs text-zinc-500">
+                When enabled, users must enter an activation token before starting a chat.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span
+                className={`text-xs font-medium ${tokenRequired ? 'text-emerald-400' : 'text-zinc-400'}`}
+              >
+                {tokenRequired ? 'Enabled' : 'Disabled'}
+              </span>
+              <button
+                onClick={() => handleToggleTokenRequired(!tokenRequired)}
+                className={`relative inline-flex w-11 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none ${
+                  tokenRequired ? 'bg-emerald-600' : 'bg-zinc-700'
+                }`}
+              >
+                <span
+                  className={`block w-4 h-4 rounded-full bg-white transition-transform duration-300 ${
+                    tokenRequired ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                ></span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Admin Access Info */}

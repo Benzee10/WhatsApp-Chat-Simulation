@@ -38,6 +38,7 @@ export const ADMIN_CONFIG = {
 
   // Storage keys
   TOKENS_KEY: 'quickchat_activation_tokens',
+  TOKEN_REQUIRED_KEY: 'quickchat_token_required',
 };
 
 /**
